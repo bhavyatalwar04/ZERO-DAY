@@ -9,14 +9,12 @@ import { useUser } from '@/lib/contexts/user-context'
 import { initUser } from '@/lib/utils/localStorage'
 import { createClient } from '@/lib/supabase/client'
 
-export default function SignupPage() {
+export default function LoginPage() {
     const { navigateTo } = useNavigation()
     const { setUser } = useUser()
     const [mounted, setMounted] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
     const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
         email: '',
         password: '',
     })
@@ -41,14 +39,14 @@ export default function SignupPage() {
                     email: 'demo@zeroday.market',
                 })
                 setUser(newUser)
-                navigateTo('/onboarding')
+                navigateTo('/welcome')
                 return
             }
 
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
+                    redirectTo: `${window.location.origin}/auth/callback?next=/welcome`,
                 },
             })
 
@@ -69,29 +67,25 @@ export default function SignupPage() {
             const supabase = createClient()
             const isConfigured = process.env.NEXT_PUBLIC_SUPABASE_URL?.startsWith('https://')
             if (!isConfigured) {
-                // Offline fallback
+                // Offline fallback - search if user details can be stubbed
+                const emailParts = formData.email.split('@')
+                const name = emailParts[0]
                 const newUser = initUser({
                     id: `usr_${Date.now()}`,
-                    firstName: formData.firstName,
-                    lastName: formData.lastName,
+                    firstName: name.charAt(0).toUpperCase() + name.slice(1),
+                    lastName: 'Trader',
                     email: formData.email,
                 })
                 setUser(newUser)
                 setTimeout(() => {
-                    navigateTo('/onboarding')
+                    navigateTo('/welcome')
                 }, 1000)
                 return
             }
 
-            const { data, error } = await supabase.auth.signUp({
+            const { data, error } = await supabase.auth.signInWithPassword({
                 email: formData.email,
                 password: formData.password,
-                options: {
-                    data: {
-                        first_name: formData.firstName,
-                        last_name: formData.lastName,
-                    }
-                }
             })
 
             if (error) {
@@ -101,14 +95,16 @@ export default function SignupPage() {
             }
 
             if (data?.user) {
+                const metadata = data.user.user_metadata || {}
+                const nameParts = (metadata.name || '').split(' ')
                 const newUser = initUser({
                     id: data.user.id,
-                    firstName: formData.firstName,
-                    lastName: formData.lastName,
+                    firstName: metadata.first_name || nameParts[0] || 'Welcome',
+                    lastName: metadata.last_name || nameParts.slice(1).join(' ') || 'User',
                     email: formData.email,
                 })
                 setUser(newUser)
-                navigateTo('/onboarding')
+                navigateTo('/welcome')
             }
         } catch (err: any) {
             setAuthError(err.message || 'Authentication failed')
@@ -122,7 +118,6 @@ export default function SignupPage() {
         <div className="min-h-screen flex">
             {/* Left Side - Compact art panel */}
             <div className="hidden lg:flex lg:w-[38%] bg-black flex-col justify-between p-8 relative overflow-hidden">
-                {/* Background Image - shifted right */}
                 <div
                     className="absolute -left-[-10%] -right-[5%] top-0 bottom-0 bg-cover bg-center"
                     style={{
@@ -159,8 +154,8 @@ export default function SignupPage() {
                     transition={{ duration: 0.8, delay: 0.3 }}
                 >
                     <h1 className="text-[32px] leading-[1.2] text-white font-light tracking-tight mb-4">
-                        Join the traders who<br />
-                        <span className="text-white/50">learn from history.</span>
+                        Sign in to the<br />
+                        <span className="text-white/50">simulations terminal.</span>
                     </h1>
                     <div className="flex items-center gap-4 text-white/35 text-xs mt-6">
                         <span>50+ scenarios</span>
@@ -209,10 +204,10 @@ export default function SignupPage() {
                             className="text-[32px] text-white tracking-wide mb-3"
                             style={{ fontFamily: 'var(--font-anton), sans-serif' }}
                         >
-                            Create your account
+                            Sign in to terminal
                         </h2>
                         <p className="text-white/40 text-sm">
-                            Start trading historical scenarios in minutes
+                            Access historical scenarios and profile progress
                         </p>
                     </div>
 
@@ -256,26 +251,6 @@ export default function SignupPage() {
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Name Fields */}
-                        <div className="grid grid-cols-2 gap-6">
-                            <input
-                                type="text"
-                                value={formData.firstName}
-                                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                                className="w-full px-4 py-4 bg-white/[0.03] border border-white/10 rounded-xl text-white placeholder-white/30 focus:border-white/25 focus:bg-white/[0.05] focus:outline-none transition-all text-sm"
-                                placeholder="First name"
-                                required
-                            />
-                            <input
-                                type="text"
-                                value={formData.lastName}
-                                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                                className="w-full px-4 py-4 bg-white/[0.03] border border-white/10 rounded-xl text-white placeholder-white/30 focus:border-white/25 focus:bg-white/[0.05] focus:outline-none transition-all text-sm"
-                                placeholder="Last name"
-                                required
-                            />
-                        </div>
-
                         {/* Email */}
                         <input
                             type="email"
@@ -293,9 +268,8 @@ export default function SignupPage() {
                                 value={formData.password}
                                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                 className="w-full px-4 py-4 bg-white/[0.03] border border-white/10 rounded-xl text-white placeholder-white/30 focus:border-white/25 focus:bg-white/[0.05] focus:outline-none transition-all text-sm pr-12"
-                                placeholder="Password (min 10 characters)"
+                                placeholder="Password"
                                 required
-                                minLength={10}
                             />
                             <button
                                 type="button"
@@ -315,16 +289,16 @@ export default function SignupPage() {
                                 className="relative w-full py-4 rounded-xl bg-white text-black text-sm font-medium tracking-wide hover:bg-white/95 hover:shadow-[0_0_40px_rgba(255,255,255,0.1)] transition-all disabled:opacity-50"
                                 whileTap={{ scale: 0.995 }}
                             >
-                                {isLoading ? 'Creating account...' : 'Continue'}
+                                {isLoading ? 'Signing in...' : 'Sign In'}
                             </motion.button>
                         </div>
 
                         {/* Footer */}
                         <div className="flex items-center justify-between pt-4 text-sm">
                             <div>
-                                <span className="text-white/30">Already have an account? </span>
-                                <Link href="/login" className="text-white/60 hover:text-white transition-colors">
-                                    Sign in
+                                <span className="text-white/30">New to Zero Day? </span>
+                                <Link href="/signup" className="text-white/60 hover:text-white transition-colors">
+                                    Create account
                                 </Link>
                             </div>
                             <div className="text-white/20 text-xs">

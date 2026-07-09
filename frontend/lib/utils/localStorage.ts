@@ -1,3 +1,5 @@
+import { createClient } from '@/lib/supabase/client'
+
 export interface UserStats {
     xp: number;
     level: number;
@@ -95,6 +97,30 @@ export function getUser(): StoredUser | null {
 export function saveUser(user: StoredUser) {
     if (typeof window === 'undefined') return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+
+    try {
+        const supabase = createClient()
+        if (supabase && supabase.auth && supabase.auth.getSession) {
+            supabase.auth.getSession().then(({ data: { session } }: any) => {
+                if (session?.user) {
+                    const remoteStats = session.user.user_metadata?.stats
+                    const localStats = user.stats
+
+                    if (JSON.stringify(remoteStats) !== JSON.stringify(localStats)) {
+                        supabase.auth.updateUser({
+                            data: {
+                                first_name: user.firstName,
+                                last_name: user.lastName,
+                                stats: user.stats
+                            }
+                        })
+                    }
+                }
+            })
+        }
+    } catch {
+        // Safe catch-all fallback
+    }
 }
 
 export function initUser(authData: { id: string; email: string; firstName: string; lastName: string }): StoredUser {
