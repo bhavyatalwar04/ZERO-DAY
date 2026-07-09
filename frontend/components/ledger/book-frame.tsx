@@ -125,7 +125,6 @@ export function BookFrame({ caseNumber, totalCases, onPrev, onNext, children }: 
             backgroundSize: '4px 4px, 100% 100%',
             minHeight: '460px',
             boxShadow: 'inset 0 0 50px rgba(80, 50, 20, 0.18)',
-            position: 'relative',
             overflow: 'hidden',
           }}>
             {/* Spine seam — subtle vertical shadow on either side of center */}

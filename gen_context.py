@@ -1,0 +1,426 @@
+
+content = """# ZERO-DAY MARKET — Complete Project Context Document
+# Version: May 2026 | Use this to brief any AI about this project.
+
+## WHAT IS THIS PROJECT
+ZERO-DAY MARKET is a premium historical stock market trading simulator web application. Users relive real historical market crashes and events (Lehman 2008, COVID 2020, GameStop 2021, etc.) in real-time simulation, making trading decisions without knowing the outcome. The four core educational objectives are:
+1. Bridge Theory-Practice Gap — active decision-making under realistic pressure
+2. Develop Intuitive Pattern Recognition — repeated exposure to diverse event types
+3. Risk-Free Skill Mastery — virtual capital (Rs. 1,00,000), zero real money
+4. Personalized Pedagogical Growth — AI coaching, bias detection, XP/leveling
+
+## TECH STACK
+- Framework: Next.js 16.1.6 with App Router
+- Language: TypeScript 5
+- Styling: Tailwind CSS v4
+- Animations: Framer Motion v12
+- Auth: Supabase Auth + @supabase/ssr
+- AI Backend: Groq API (llama-3.1-8b-instant) with 4-key rotation
+- Charting: Lightweight Charts v5 (TradingView open source)
+- Icons: Lucide React
+- Typography: Anton (display), Geist Sans (UI), Geist Mono (numbers)
+- State: React useReducer + Context (no Redux/Zustand)
+- Persistence: localStorage (client) — Supabase DB not yet used for game data
+- Runtime: React 19, Node.js server (Next.js edge middleware)
+
+## REPOSITORY STRUCTURE
+ZERO-DAY/
+  frontend/
+    app/                          Next.js App Router pages + API routes
+      page.tsx                    Cinematic splash/landing page
+      layout.tsx                  Root layout, fonts, providers
+      globals.css                 Global CSS (8.8KB)
+      template.tsx                Page transition wrapper
+      signup/page.tsx             Supabase auth signup (14KB)
+      welcome/page.tsx            Post-signup welcome screen
+      onboarding/page.tsx         Knowledge level selection (Beginner/Intermediate/Advanced)
+      ledger/page.tsx             Scenario library — browse all 10 scenarios (32KB)
+      sim/[id]/prep/page.tsx      Pre-trade briefing room (dynamic route)
+      sim/[id]/live/page.tsx      Real-time trading simulation (dynamic route)
+      auth/callback/              Supabase OAuth callback handler
+      api/copilot/route.ts        AI trading coach endpoint (streaming, 7.2KB)
+      api/feedback/route.ts       Post-trade AI grader (streaming JSON, 5.2KB)
+      api/tutor/route.ts          Prep Room AI analyst ORUS (non-streaming, 3.2KB)
+      api/sentiment/route.ts      News headline sentiment scorer (non-streaming, 1.4KB)
+      api/portfolio-feedback/route.ts  Portfolio run debrief (non-streaming JSON, 4.5KB)
+    components/
+      layout/sidebar.tsx          App navigation sidebar (9.4KB)
+      layout/dashboard-content.tsx  Main library dashboard (28KB)
+      prep/ (24 files)            All Prep Room components
+        allocate-strip.tsx, allocation-panel.tsx, artifact-card.tsx,
+        artifacts.tsx, deploy-verdict-modal.tsx, deploy-wax-seal.tsx,
+        dossier-card.tsx, dossier-modal.tsx, dossier-workbench.tsx,
+        enter-live-cta.tsx, fan-of-cards.tsx, heraldic-intel.tsx,
+        macro-intel-rail.tsx, open-ledger.tsx, parchment-banner.tsx,
+        prep-backdrop.tsx, prep-banner.tsx, prep-hud.tsx, prep-ticker.tsx,
+        stock-card-grid.tsx, stock-files-rail.tsx, stock-rail.tsx,
+        tape-ticker.tsx, tutor-drawer.tsx (15KB)
+      live/ (11 files)            All Live Trading components
+        bottom-dock.tsx (22KB)    Order entry dock
+        live-chart.tsx (18.6KB)   Real-time candlestick chart
+        live-coach-prompts.tsx (13.2KB)
+        live-hud.tsx (11.5KB)     Portfolio HUD
+        live-tutorial-animated-pnl.tsx, live-tutorial-causal-chain.tsx,
+        live-tutorial-cinematic.tsx, live-tutorial-trial.tsx,
+        live-tutorial.tsx (34.5KB)  Full tutorial overlay system
+        overlays.tsx (21.8KB)     Circuit breaker / halt overlays
+        right-rail.tsx (22.6KB)   Market depth + news feed
+      portfolio/ (16 files)       Portfolio Construction Game components
+        allocation-panel.tsx (8.2KB), allocation-slider.tsx,
+        causal-pulse-overlay.tsx, cinematic-intro.tsx, coach-whisper.tsx,
+        flash-crash-overlay.tsx, news-banner.tsx, order-book-panel.tsx,
+        portfolio-header.tsx, rebalance-modal.tsx, results/ (directory),
+        sector-heatmap.tsx, stock-card.tsx (8KB), stock-sparkline.tsx,
+        trading-floor.tsx (5.5KB), why-popover.tsx
+      ledger/ (9 files)           Scenario Library components
+        book-frame.tsx, bookmark-shelf.tsx,
+        briefing-overlay.tsx (43KB!), case-renderers/ (directory),
+        inside-cover.tsx, ledger-hud.tsx, market-chronicle-ticker.tsx,
+        volume-strip.tsx, wax-seal-button.tsx
+      gameplay/ (6 files)         Shared cross-mode components
+        ai-tutor.tsx (16.8KB), candlestick-chart.tsx (14.7KB),
+        market-drawer.tsx (12.7KB), news-drawer.tsx (10KB),
+        scenario-chart.tsx (12.5KB), trading-team-drawer.tsx (8.5KB)
+      ui/ (11 files)              Design system primitives
+        badge.tsx, button.tsx, card.tsx, empty-state.tsx, input.tsx,
+        label.tsx, logo.tsx, particle-text-effect.tsx (13.8KB),
+        progress.tsx, skeleton.tsx, spooky-smoke-animation.tsx (9.4KB)
+    lib/
+      data/
+        scenarios.ts (19KB)       All 10 scenario definitions (metadata only)
+        scenarios/cov-20/         FULL intraday data for COVID-19 crash scenario
+          timeline.ts (8.2KB)     75 x 5-min OHLCV bars for 6 stocks, procedural generation
+          live-events.ts (9.3KB)  20 news events, 11 ORUS whispers, 1 circuit breaker
+          stocks.ts (21KB)        Stock fundamental profiles
+          companies.ts (28KB)     Company background data
+          macro.ts (2KB)          Macro economic context
+          index.ts                Barrel export
+        portfolio-scenarios/covid-crash/  Portfolio mode COV-20 data
+        lehman-ohlcv.ts (20KB)    Lehman Brothers minute-level data
+        ledger-cases.ts (13.6KB)  Knowledge base case studies
+        tutor-concepts.ts (11.5KB) Learning concept definitions
+      contexts/
+        live-session-context.tsx (15.3KB)  Core live trading game engine (useReducer)
+        loading-context.tsx        Global loading state
+        navigation-context.tsx     Navigation state
+        toast-context.tsx          Toast notification system
+        user-context.tsx           User session state
+      hooks/
+        use-portfolio-game.ts (17.2KB)  Portfolio game state machine hook
+        use-gameplay-hotkeys.ts    Keyboard shortcuts during gameplay
+        use-global-hotkeys.ts      App-wide keyboard shortcuts
+      utils/
+        portfolio-math.ts (7.9KB)  HHI diversification, PnL, mistake detection, causal rules
+        portfolio-price.ts (3.2KB) Portfolio price utilities
+        scoring.ts (2.1KB)         XP calculation system
+        localStorage.ts (7.1KB)    User stats persistence layer (full CRUD)
+        sound.ts (2.7KB)           Web Audio API synthesiser (8 sounds)
+        telemetry.ts (4KB)         Silent behavioral tracking system
+        animations.ts (2KB)        Shared Framer Motion configs
+        pulse-registry.ts          Causal pulse animation registry
+      ai/
+        groq-client.ts (1.5KB)     Groq API client with key-rotation fallback
+      supabase/                    Supabase auth client setup (server + browser)
+      providers.tsx                Root provider tree
+      utils.ts                     cn() class utility
+    types/                         TypeScript type definitions
+      live.ts                      LiveSessionState, Order, Position, etc.
+      portfolio.ts                 PortfolioScenario, Allocation, RunResult, etc.
+    middleware.ts (2.4KB)          Supabase SSR auth middleware
+    next.config.ts                 Next.js config (compression, image formats, package optimisation)
+    package.json                   Dependencies
+  Python research scripts (root level, NOT integrated):
+    behavioral_analysis_implementation.py  Cognitive bias detection from trading patterns
+    dspy_groq_implementation.py            DSPy structured AI pipelines
+    experimental_ai_models.py             Model config experiments
+    sentiment_analysis_implementation.py  Dedicated NLP sentiment model
+    vlm_finetuned_implementation.py       Vision-Language Model for chart reading
+
+## USER FLOW
+Landing (/) -> Signup (/signup) -> Supabase Auth -> Welcome (/welcome)
+-> Onboarding (/onboarding, picks Beginner/Intermediate/Advanced)
+-> Scenario Library (/ledger, browse 10 scenarios)
+-> Scenario Briefing Overlay (modal with full dossier)
+-> Prep Room (/sim/[id]/prep, study stocks, ask AI tutor, set allocations)
+-> Live Trading (/sim/[id]/live, real-time simulation)
+-> Results + AI Feedback
+
+## THE 10 SCENARIOS (all defined in scenarios.ts)
+ID                     | Title                        | Category    | Difficulty | Solve Rate
+lehman-2008            | Lehman Brothers Collapse     | crash       | 4 Hard     | 31%
+covid-crash-2020       | COVID Market Panic           | crash       | 3 Medium   | 44%
+gamestop-2021          | GameStop Short Squeeze       | social      | 5 Expert   | 8%
+apple-earnings-2020    | Apple Surprise Quarter       | earnings    | 2 Easy     | 62%
+tesla-earnings-2019    | Tesla Shocks the Bears       | earnings    | 3 Medium   | 51%
+netflix-miss-2019      | Netflix Subscriber Shock     | earnings    | 3 Medium   | 45%
+brexit-2016            | Brexit Referendum Shock      | economic    | 4 Hard     | 28%
+flash-crash-2010       | The Flash Crash of 2010      | technical   | 4 Hard     | 19%
+crypto-winter-2018     | Crypto Winter 2018           | blackswan   | 5 Expert   | 12%
+india-demonetization-2016 | India Demonetization     | economic    | 3 Medium   | 38%
+
+NOTE: Only COV-20 (covid-crash-2020) has full real-time OHLCV data.
+The other 9 scenarios have metadata defined but NO live simulation data files yet.
+
+## LIVE TRADING ENGINE (live-session-context.tsx)
+Architecture: React useReducer + setInterval tick loop
+Starting capital: Rs. 1,00,000
+Symbols (COV-20): INDIGO, SUNPHARMA, RELIANCE, HDFCBANK, TITAN, TCS
+Session: 375 minutes (9:15 to 15:30 IST)
+Speed modes: 1x (1500ms/tick), 5x (300ms/tick), 10x (150ms/tick)
+
+State machine statuses: PRE_OPEN -> LIVE -> PAUSED/HALTED -> CLOSED
+
+Actions: START, TICK, PAUSE, RESUME, END, SKIP_HALT, SET_SPEED, SET_ACTIVE,
+         PLACE_ORDER, CANCEL_ORDER, SET_STOP, MARK_COACH_SHOWN
+
+Order types supported: MARKET, LIMIT, SL (stop-loss limit), SL-M (stop-loss market)
+
+On every TICK:
+  1. Advance currentMinute + 1
+  2. If minute >= 375: auto square-off all positions, status = CLOSED
+  3. Check circuit breaker triggers (COV20_CIRCUITS)
+  4. If halt expired: resume LIVE
+  5. Match pending orders (matchOrders function)
+  6. Record equity curve data point
+
+Order matching logic:
+  MARKET: fill immediately at current price
+  LIMIT BUY: fill if price <= limit price
+  LIMIT SELL: fill if price >= limit price
+  SL/SL-M: fill when price crosses trigger price
+
+Price lookup: COV20_TIMELINE[symbol].bars[Math.floor(minute/5)].close
+Selectors exposed via context: ltp(), prevClose(), pctChange(), totalEquity,
+  dayPnL, dayPnLPct, positionsValue, marginUsed, getBars(), getIndexLatest(),
+  pendingNews(), whisperForMinute()
+
+## PORTFOLIO CONSTRUCTION ENGINE (use-portfolio-game.ts)
+Architecture: Custom React hook with useState + setInterval
+Starting capital: Rs. 1,00,000
+Game length: 480 seconds (compressed trading day)
+Stocks: Same 6 as live trading (COV-20 scenario)
+
+State machine phases: intro -> allocating -> running -> rebalance -> flash_crash -> running -> closed
+
+Key mechanics:
+  - Users allocate rupee amounts (not share quantities)
+  - 4 news events fire at fixed seconds, each opens a 15-second rebalance window
+  - Flash crash event forces binary choice: panicSell() or holdThroughCrash()
+  - Reveal phases progressively unlock more market data:
+    sparkline (t=0) -> volume (t=120s) -> orderbook (t=240s) -> heatmap (t=360s)
+
+End-of-game computations:
+  computeDoNothingHistory()    what if user held initial allocation unchanged?
+  computePerfectPlayHistory()  optimal sector rotation benchmark
+  detectMistakes()             panic sell, over-concentration, wrong sector hold
+  detectUnlockedRules()        causal rules demonstrated by user behavior
+  computeDiversificationScore() HHI-based 0-5 scale
+
+HHI formula: hhi = sum(weight^2) for each stock weight
+Score = max(0, min(5, 5 * (1 - hhi) / (1 - 1/6)))
+
+## COV-20 DATA (scenarios/cov-20/)
+Date: March 9, 2020 (COVID-19 crash + Saudi-Russia oil war)
+6 stocks with prevClose, openPct, lowPct, closePct:
+  INDIGO:    prevClose=1247.50, open=-5.2%, low=-9.2%, close=-7.5%
+  SUNPHARMA: prevClose=428.20,  open=+0.5%, low=-1.8%, close=+1.4%  (safe haven)
+  RELIANCE:  prevClose=1356.10, open=-6.8%, low=-10.8%, close=-8.2%
+  HDFCBANK:  prevClose=1054.25, open=-3.8%, low=-6.2%, close=-4.5%
+  TITAN:     prevClose=1085.00, open=-4.8%, low=-8.5%, close=-7.5%
+  TCS:       prevClose=2156.40, open=-2.5%, low=-4.6%, close=-2.8%
+
+OHLCV generation: mulberry32 PRNG (deterministic, seed = symbol name)
+75 bars at 5-minute intervals, PATH_SHAPE keyframes define day narrative
+
+Indices tracked: NIFTY (-5.4%), SENSEX (-5.2%), BANKNIFTY (-6.9%),
+                 USDINR (+0.6%), BRENT (-25.2%), GOLD (+1.2%), VIX (+35%)
+
+News events (20 total, classified signal vs noise):
+  09:17 Asian markets down 5% (signal)
+  09:25 NIFTY opens gap-down 4.2% (signal, critical)
+  09:32 Italy national lockdown (signal, critical) — impacts INDIGO, SUNPHARMA
+  09:48 Morgan Stanley analyst note (noise)
+  10:14 IndiGo route review (noise — yesterday's news)
+  10:30 Circuit breaker threshold warning (signal, critical)
+  10:32 TRADING HALTED — 5% lower circuit (signal, critical)
+  10:38 Brent breaks below $32 (signal, critical) — impacts RELIANCE, INDIGO, HDFCBANK
+  10:47 SEBI routine memo (noise)
+  10:47 Trading resumes -6.1% (signal)
+  11:12 Sun Pharma hydroxychloroquine donation (signal) — impacts SUNPHARMA
+  11:28 WHO pandemic declaration imminent (signal, critical) — impacts INDIGO, TITAN, SUNPHARMA
+  11:50 Jefferies pharma caution (noise)
+  12:05 Dow futures pare losses (signal, medium)
+  12:28 Twitter RBI cut rumour (noise)
+  13:15 YES Bank moratorium fears (signal) — impacts HDFCBANK
+  13:50 TCS business continuity letter (signal) — impacts TCS
+  14:18 ET Markets opinion piece (noise)
+  14:42 Brent closes at $31.13 (signal) — impacts RELIANCE, INDIGO
+  15:15 Closing bell warning (signal)
+
+Circuit breaker: fireAt=ist(10,32), level=5, haltMinutes=15
+ORUS whispers: 11 coaching observations at specific minute marks
+
+## AI ENDPOINTS (all in app/api/)
+
+### /api/copilot (POST)
+Mode A (live trading): Streaming plain text
+  Input: { messages: ChatMessage[], marketContext: { price, rsi, macd, news } }
+  System: "Expert quantitative trading teacher. Answer questions about current market setup."
+  Model: llama-3.1-8b-instant, temperature=0.7, max_tokens=1024, stream=true
+  Output: Raw text stream (SSE parsed, tokens piped to browser)
+
+Mode B (portfolio coach): Non-streaming plain text
+  Triggered when: context === 'portfolio' in request body
+  System: "Give 1-sentence observation. Under 20 words. Name cognitive bias if applicable.
+           Biases: anchoring, recency bias, FOMO, disposition effect, loss aversion."
+  Model: llama-3.1-8b-instant, temperature=0.5, max_tokens=40, stream=false
+
+Key rotation: tries GROQ_API_KEY_1 through _4, switches on HTTP 429
+
+### /api/feedback (POST)
+Mode: Streaming JSON
+  Input: { scenarioContext, correctOutcome, userGuess, confidence }
+  System: Forces structured JSON output:
+    { assessment, insight, whatYouGotRight: string[], quote }
+  Model: llama-3.1-8b-instant, temperature=0.2, response_format={type:"json_object"}
+  Output: Streamed JSON chunks, browser accumulates then parses
+
+### /api/tutor (POST)
+Mode: Non-streaming plain text
+  Input: { stock, artifact, scenarioId, contextData }
+  Persona: ORUS — "clinical, slightly-sarcastic, Hugo Weaving voice"
+  Rules: Cite actual numbers, max 60 words, plain prose, no "you should..."
+  Model: llama-3.1-8b-instant, temperature=0.4, max_tokens=180, stream=false
+  Output: { text: string }
+
+### /api/sentiment (POST)
+Mode: Non-streaming JSON
+  Input: { headline: string }
+  System: Quant finance NLP model, return { score: 0-100, type: bullish|bearish|neutral }
+  Uses withGroqFallback() from groq-client.ts
+  Fallback on any error: { score: 50, type: 'neutral' }
+
+### /api/portfolio-feedback (POST)
+Mode: Non-streaming JSON
+  Input: { runResult: PortfolioRunResult, scenarioSlug: string }
+  Preprocessing: buildSummary() converts result to plain-English text including
+    snapshots, P&L, panic sell flag, diversification score, mistakes, rules unlocked
+  Output: { headline, winMoment, costMoment, bias, proTip }
+  Fallback on JSON parse fail: hardcoded graceful response
+
+## GROQ CLIENT (lib/ai/groq-client.ts)
+Uses @ai-sdk/openai with Groq base URL
+withGroqFallback<T>(operation: (model) => Promise<T>)
+  Tries each key in rotation on HTTP 429
+  Throws if all keys exhausted
+
+## AUTHENTICATION (middleware.ts)
+Supabase SSR cookie-based sessions
+Middleware runs on ALL requests (except static assets)
+Graceful skip if NEXT_PUBLIC_SUPABASE_URL missing (local dev)
+Protected routes: /profile (redirect to /signup if no user)
+Auth routes: /signup (redirect to /dashboard if logged in)
+
+## SCORING SYSTEM (lib/utils/scoring.ts)
+Direction: 50 pts if predicted direction matches actual
+Magnitude: max(0, 50 - diff * 0.8) where diff = abs(predicted% - actual%)
+  Only awarded if direction correct OR predicted flat
+Confidence bonus (1-5 stars):
+  Correct + stars>=4: +20 | Correct + stars<=2: +5
+  Wrong + stars>=4: -10  | Wrong + low: no penalty
+Total XP = max(0, direction + magnitude + confidence) * 1.5
+
+## USER PROGRESSION (lib/utils/localStorage.ts)
+Storage key: 'zdm_user_v2'
+XP levels: [0, 500, 1500, 3000, 6000, 10000, 20000] (7 levels)
+Ranks by scenarios completed:
+  0: Novice Trader | 10: Junior Analyst | 25: Market Observer
+  50: Trading Specialist | 100: Senior Analyst | 200: Market Expert | 500: Master Trader
+
+Badges:
+  first-trade: completed >= 1 scenario
+  first-correct: last accuracy > 50%
+  streak-7: 7-day login streak
+  10-scenarios: completed >= 10 scenarios
+  crash-direction: correctly called Lehman direction
+
+Portfolio run stored under: 'portfolio_run_{slug}'
+
+## TELEMETRY (lib/utils/telemetry.ts)
+Storage: localStorage key 'zdm_prep_telemetry_{scenarioId}'
+Event types: artifact-view, tutor-open, tutor-marked-studied, tab-blur,
+             allocation-change, deploy-clicked
+summarizeSession() computes: totalDurationMs, artifactsViewed (ms per artifact),
+  tutorOpensCount, studiedArtifacts, blurEvents, totalAllocationChanges,
+  finalAllocations, unstudiedAtDeploy, deployTimeSec
+
+## SOUND SYSTEM (lib/utils/sound.ts)
+Built on Web Audio API — zero external dependencies
+8 sounds: opening-bell, closing-bell, breaking-news, flash-crash,
+          tick-soft, rule-unlock, buy, sell
+All synthesised via oscillators (sine, triangle, square, sawtooth) with gain envelopes
+tick-soft throttled to max 1 play per 4000ms
+Global mute flag: globalMuted boolean
+
+## DESIGN SYSTEM
+Aesthetic: Cinematic trading terminal / spy thriller
+Background: #050505 (near-black)
+Accent: #dc2626 (red), #b91c1c (darker red)
+Text primary: #e8e8e8 | Text secondary: rgba(180,180,180,0.6)
+Gains: #22c55e (green) | Losses: #ef4444 (red)
+Display font: Anton (all caps headlines)
+UI font: Geist Sans / Inter
+Monospace: Geist Mono (prices, tickers — tabular-nums)
+Special effects: ParticleTextEffect (canvas dissolve), SpookySmokeAnimation,
+                 CausalPulseOverlay (animated arrows news -> stock cards)
+Glassmorphism used in overlays and modals
+
+## NEXT.JS CONFIG
+compress: true
+poweredByHeader: false
+images: avif + webp, TTL=60s
+experimental.optimizePackageImports: lucide-react, framer-motion, radix-ui
+devIndicators: bottom-right (avoids blocking order ticket)
+
+## WHAT IS NOT YET BUILT
+- Leaderboard (route not created)
+- Server-side progress sync to Supabase DB (all localStorage only)
+- Real OHLCV data for 9 other scenarios (only COV-20 is complete)
+- Adaptive difficulty (knowledgeLevel stored but nothing adapts to it)
+- /api/sentiment not connected to live news feed (route exists, unused)
+- Knowledge base / Learning Center (ledger-cases.ts data exists, no reading UI)
+- Post-session debrief using telemetry data (data captured, UI not built)
+- Python AI experiments not integrated (behavioral_analysis, dspy, vlm, sentiment)
+
+## ENVIRONMENT VARIABLES REQUIRED
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+GROQ_API_KEY_1
+GROQ_API_KEY_2
+GROQ_API_KEY_3
+GROQ_API_KEY_4
+
+## KEY TYPE DEFINITIONS
+LiveSessionState: { scenarioId, status, currentMinute, speed, activeSymbol, cash,
+  positions, orders, realisedPnL, firedNewsIds, currentHalt, equityCurve, started, coachShown }
+Order: { id, symbol, side(BUY|SELL), type(MARKET|LIMIT|SL|SL-M), quantity, price?,
+  triggerPrice?, validity, status(PENDING|FILLED|CANCELLED|REJECTED), placedAtMin,
+  filledAtMin?, filledPrice?, reason? }
+Position: { symbol, qty, avgPrice, realisedPnL, stopPrice? }
+PortfolioRunResult: { startingCapital, finalValue, pnlRupees, pnlPct, snapshots,
+  mistakes, unlockedRuleIds, diversificationScore, didPanicSell, pnlHistory,
+  doNothingHistory, perfectPlayHistory }
+Mistake: { atSecond, label, detail, costRupees }
+Allocation: { symbol, shares, avgCost, currentValue, pnlRupees, pnlPct }
+
+## COMMANDS
+cd frontend && npm run dev    (development server on localhost:3000)
+npm run build                 (production build)
+npm run lint                  (eslint)
+"""
+
+with open(r"d:\ZERO-DAY\PROJECT_CONTEXT.txt", "w", encoding="utf-8") as f:
+    f.write(content)
+
+print("Done. File saved: d:\\ZERO-DAY\\PROJECT_CONTEXT.txt")
+print(f"Size: {len(content)} characters, ~{len(content.split())} words")

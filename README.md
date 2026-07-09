@@ -125,8 +125,15 @@ cp .env.example .env.local
 Create a `.env.local` file in the `frontend` directory:
 
 ```env
+# Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# Groq API Configuration (supports rotation on rate limits)
+GROQ_API_KEY_1=your_groq_api_key_1
+GROQ_API_KEY_2=your_groq_api_key_2 # Optional fallback
+GROQ_API_KEY_3=your_groq_api_key_3 # Optional fallback
+GROQ_API_KEY_4=your_groq_api_key_4 # Optional fallback
 ```
 
 ### Run Development Server
@@ -145,21 +152,48 @@ Open [http://localhost:3000](http://localhost:3000) to see the magic ✨
 Zero-Day-Market-/
 ├── 📂 frontend/
 │   ├── 📂 app/
-│   │   ├── 📄 page.tsx          # Splash page (landing)
-│   │   ├── 📂 signup/
-│   │   │   └── 📄 page.tsx      # Signup page
-│   │   ├── 📂 login/
-│   │   │   └── 📄 page.tsx      # Login page
-│   │   └── 📄 layout.tsx        # Root layout with fonts
-│   ├── 📂 public/
-│   │   ├── 📂 images/           # Static images
-│   │   ├── 📂 videos/           # Background videos (local only)
-│   │   └── 📂 audio/            # Audio files (local only)
-│   ├── 📄 tailwind.config.ts
+│   │   ├── 📄 page.tsx                  # Cinematic splash page (landing)
+│   │   ├── 📂 signup/                   # Supabase Auth signup
+│   │   ├── 📂 login/                    # Supabase Auth login
+│   │   ├── 📂 welcome/                  # Post-signup onboarding welcome
+│   │   ├── 📂 onboarding/               # Knowledge level assessment
+│   │   ├── 📂 ledger/                   # Scenario library & book-style index
+│   │   ├── 📂 academy/                  # Learning center & mini-game playlist
+│   │   │   └── 📂 [slug]/               # Dynamic mini-game engine room
+│   │   ├── 📂 sim/[id]/
+│   │   │   ├── 📂 prep/                 # Pre-trade briefing & allocation desk
+│   │   │   ├── 📂 live/                 # Real-time trading simulation engine
+│   │   │   └── 📂 debrief/              # Post-trade AI grader & performance review
+│   │   └── 📂 api/                      # Groq AI backend endpoints
+│   │       ├── 📂 copilot/              # Streaming quant tutor
+│   │       ├── 📂 feedback/             # Post-trade grader
+│   │       ├── 📂 tutor/                # Prep room ORUS assistant
+│   │       ├── 📂 debrief/              # Behavioral debrief parser
+│   │       └── 📂 chat/                 # Help chat assistant
+│   ├── 📂 components/                   # UI primitives & page modules
+│   │   ├── 📂 ui/                       # Glassmorphic primitives (buttons, cards, etc.)
+│   │   ├── 📂 prep/                     # Briefing tools & stock card grids
+│   │   ├── 📂 live/                     # Real-time chart & order entry docks
+│   │   ├── 📂 academy/                  # Custom games (Candle Memory, Plan Drag-n-drop)
+│   │   ├── 📂 help-chat/                # Floating Orus helper chat widget
+│   │   └── 📂 ledger/                   # Book-style catalog UI
+│   ├── 📂 lib/
+│   │   ├── 📂 behavior/                 # Cognitive bias tracer & archetype detector
+│   │   ├── 📂 rl/                       # Multi-armed bandit recommender & simulation engine
+│   │   ├── 📂 contexts/                 # Global state (live session engine, users, etc.)
+│   │   └── 📂 hooks/                    # usePortfolioGame custom hook
 │   └── 📄 package.json
+├── 📂 .github/workflows/
+│   └── 📄 ci.yml                        # CI/CD integration pipeline (Linters + Build)
+├── 📂 ai/                               # Python research & AI model prototypes
+│   ├── 📄 behavioral_analysis.py        # Cognitive bias parser
+│   ├── 📄 dspy_groq_agent.py            # DSPy structured pipelines
+│   ├── 📄 experimental_ai_models.py     # LLM configurations
+│   ├── 📄 sentiment_analysis.py         # News headline scorer
+│   ├── 📄 vlm_finetuned_agent.py        # Chart reading vision-language model
+│   └── 📄 rl_dspy_learner.py            # RL agent training logic
 ├── 📄 .gitignore
-├── 📄 README.md
-└── 📄 SUMMARY.md                # Development changelog
+└── 📄 README.md
 ```
 
 <br />
@@ -184,12 +218,14 @@ Zero-Day-Market-/
 
 - [x] 🎬 Cinematic splash page with video background
 - [x] 📝 Premium signup/login pages
-- [ ] 🏠 Dashboard with scenario library
-- [ ] 📊 Live trading simulation engine
-- [ ] 🧠 AI feedback system
-- [ ] 🏆 Leaderboard & social features
-- [ ] 📈 Performance analytics
-- [ ] 🎓 Learning center
+- [x] 🏠 Scenario Library & Dossier Workbench
+- [x] 📊 Live trading simulation engine (deterministic tick-loop)
+- [x] 🧠 ORUS AI Coaching & Feedback System
+- [x] 🏆 Global Leaderboard & Social Ticker (Local Sync)
+- [x] 📈 Performance Analytics & Telemetry Debrief
+- [x] 🎓 Trading Academy & 10+ Mini-Games
+- [x] 🤖 RL-based Content Recommender & Behavioral Tracer
+
 
 <br />
 
