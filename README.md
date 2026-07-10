@@ -9,6 +9,7 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.0-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Supabase](https://img.shields.io/badge/Supabase-Auth-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
 [![License](https://img.shields.io/badge/License-MIT-red?style=for-the-badge)](LICENSE)
+[![CI](https://github.com/bhavyatalwar04/ZERO-DAY/actions/workflows/ci.yml/badge.svg)](https://github.com/bhavyatalwar04/ZERO-DAY/actions/workflows/ci.yml)
 
 <br />
 
@@ -16,7 +17,7 @@
 
 *What if you could trade the 2008 crash? The GameStop squeeze? The Bitcoin halving?*
 
-[🚀 Live Demo](https://zerodaymarket.vercel.app/) · [📖 Documentation](#documentation) · [🐛 Report Bug](../../issues) · [✨ Request Feature](../../issues)
+[🚀 Live Demo](https://zerodaymarket.vercel.app) · [🐛 Report Bug](../../issues) · [✨ Request Feature](../../issues)
 
 <br />
 
@@ -35,7 +36,7 @@
 <td width="50%">
 
 ### 🎯 **Historical Scenarios**
-Relive 50+ iconic market events from the 2008 financial crisis to the GameStop short squeeze. Each scenario is meticulously recreated with real price data.
+Relive 10 curated iconic market events, from the 2008 financial crisis to the GameStop short squeeze. Each scenario is meticulously recreated with real price data.
 
 </td>
 <td width="50%">
@@ -108,10 +109,10 @@ Track your progress over time with detailed statistics, win rates, and personali
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/Zero-Day-Market-.git
+git clone https://github.com/bhavyatalwar04/ZERO-DAY.git
 
 # Navigate to project
-cd Zero-Day-Market-
+cd ZERO-DAY
 
 # Install dependencies
 cd frontend && npm install
@@ -149,7 +150,7 @@ Open [http://localhost:3000](http://localhost:3000) to see the magic ✨
 ## 📁 Project Structure
 
 ```
-Zero-Day-Market-/
+ZERO-DAY/
 ├── 📂 frontend/
 │   ├── 📂 app/
 │   │   ├── 📄 page.tsx                  # Cinematic splash page (landing)
@@ -226,6 +227,14 @@ Zero-Day-Market-/
 - [x] 🎓 Trading Academy & 10+ Mini-Games
 - [x] 🤖 RL-based Content Recommender & Behavioral Tracer
 
+<br />
+
+## 👥 Team
+
+Built by a 2-person team:
+
+- **Bhavya Talwar** — Scenario data engine (deterministic OHLCV generation via mulberry32 PRNG), Live Trading Engine (state machine, order matching for MARKET/LIMIT/SL/SL-M), ORUS AI coaching system (Groq API integration, 4-key rotation fallback)
+- **[Teammate Name]** — Multi-screen UX design, AI benchmark evaluation (FinVQA-Chart across 15 Vision-Language Models)
 
 <br />
 
@@ -267,7 +276,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 <br />
 
-[![GitHub stars](https://img.shields.io/github/stars/yourusername/Zero-Day-Market-?style=social)](../../stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/yourusername/Zero-Day-Market-?style=social)](../../network/members)
+[![GitHub stars](https://img.shields.io/github/stars/bhavyatalwar04/ZERO-DAY?style=social)](../../stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/bhavyatalwar04/ZERO-DAY?style=social)](../../network/members)
 
 </div>
