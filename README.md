@@ -16,7 +16,7 @@
 
 *What if you could trade the 2008 crash? The GameStop squeeze? The Bitcoin halving?*
 
-[🚀 Live Demo](#) · [📖 Documentation](#documentation) · [🐛 Report Bug](../../issues) · [✨ Request Feature](../../issues)
+[🚀 Live Demo](https://zerodaymarket.vercel.app/) · [📖 Documentation](#documentation) · [🐛 Report Bug](../../issues) · [✨ Request Feature](../../issues)
 
 <br />
 
