@@ -234,7 +234,7 @@ ZERO-DAY/
 Built by a 2-person team:
 
 - **Bhavya Talwar** — Scenario data engine (deterministic OHLCV generation via mulberry32 PRNG), Live Trading Engine (state machine, order matching for MARKET/LIMIT/SL/SL-M), ORUS AI coaching system (Groq API integration, 4-key rotation fallback)
-- **[Teammate Name]** — Multi-screen UX design, AI benchmark evaluation (FinVQA-Chart across 15 Vision-Language Models)
+- **Pranav Singh Puri** — Multi-screen UX design, AI benchmark evaluation (FinVQA-Chart across 15 Vision-Language Models)
 
 <br />
 
