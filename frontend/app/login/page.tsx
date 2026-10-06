@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { useNavigation } from '@/lib/contexts/navigation-context'
 import { useUser } from '@/lib/contexts/user-context'
 import { initUser } from '@/lib/utils/localStorage'
-import { createClient } from '@/lib/supabase/client'
+import { createClient, IS_SUPABASE_CONFIGURED } from '@/lib/supabase/client'
 
 export default function LoginPage() {
     const { navigateTo } = useNavigation()
@@ -29,7 +29,7 @@ export default function LoginPage() {
         setAuthError(null)
         try {
             const supabase = createClient()
-            const isConfigured = process.env.NEXT_PUBLIC_SUPABASE_URL?.startsWith('https://')
+            const isConfigured = IS_SUPABASE_CONFIGURED
             if (!isConfigured) {
                 // Mock Google sign in for demo/stub mode
                 const newUser = initUser({
@@ -65,7 +65,7 @@ export default function LoginPage() {
 
         try {
             const supabase = createClient()
-            const isConfigured = process.env.NEXT_PUBLIC_SUPABASE_URL?.startsWith('https://')
+            const isConfigured = IS_SUPABASE_CONFIGURED
             if (!isConfigured) {
                 // Offline fallback - search if user details can be stubbed
                 const emailParts = formData.email.split('@')
