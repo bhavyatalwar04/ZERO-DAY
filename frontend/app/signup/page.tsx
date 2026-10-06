@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { useNavigation } from '@/lib/contexts/navigation-context'
 import { useUser } from '@/lib/contexts/user-context'
 import { initUser } from '@/lib/utils/localStorage'
-import { createClient, IS_SUPABASE_CONFIGURED } from '@/lib/supabase/client'
+import { createClient, IS_SUPABASE_CONFIGURED, IS_DEMO_MODE } from '@/lib/supabase/client'
 
 export default function SignupPage() {
     const { navigateTo } = useNavigation()
@@ -31,8 +31,7 @@ export default function SignupPage() {
         setAuthError(null)
         try {
             const supabase = createClient()
-            const isConfigured = IS_SUPABASE_CONFIGURED
-            if (!isConfigured) {
+            if (IS_DEMO_MODE) {
                 // Mock Google sign in for demo/stub mode
                 const newUser = initUser({
                     id: `usr_google_${Date.now()}`,

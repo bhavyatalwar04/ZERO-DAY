@@ -9,6 +9,11 @@ export const IS_SUPABASE_CONFIGURED =
   SUPABASE_URL.includes('.supabase.co') &&
   SUPABASE_KEY.length > 30
 
+// Demo mode: "Continue with Google" signs in a local demo user instead of
+// redirecting to Google. On when NEXT_PUBLIC_DEMO_MODE=true or Supabase is unset.
+export const IS_DEMO_MODE =
+  process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || !IS_SUPABASE_CONFIGURED
+
 // Minimal no-op stub so the app loads without real Supabase credentials
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const stub: any = {
