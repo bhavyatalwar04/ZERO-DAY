@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { MessageCircle, X, Send, Sparkles, RotateCcw, AlertCircle } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
 import { ALL_ILLUSTRATION_SLUGS, InlineIllustration } from './illustrations'
 
 interface ChatMessage {
@@ -15,7 +16,7 @@ const STORAGE_KEY = 'zdm-help-chat'
 const INITIAL_GREETING: ChatMessage = {
   role: 'assistant',
   ts: Date.now(),
-  content: `Hi — I'm ORUS, your trading-floor assistant. I can answer questions about the platform (Academy, Ledger, Live Sim, Debrief) or about trading concepts (patterns, risk, psychology). I can also show you diagrams when they help.
+  content: `Hi — I'm ORUS, your trading-floor assistant. I can answer questions about the platform (Scenarios, Live Sim, AI Coach, Progress, Academy, Ledger) or about trading concepts (patterns, risk, psychology). I can also show you diagrams when they help.
 
 What do you want to figure out?`,
 }
@@ -72,11 +73,14 @@ export function HelpChatWidget() {
           availableImages: ALL_ILLUSTRATION_SLUGS,
         }),
       })
+      if (res.status === 401) throw new Error('Sign in to chat with ORUS.')
+      if (res.status === 429) throw new Error(((await res.json().catch(() => ({}))) as { reply?: string }).reply ?? "You've used ORUS a lot in the last hour. Try again a little later.")
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json() as { reply: string }
       setMessages(prev => [...prev, { role: 'assistant', content: data.reply, ts: Date.now() }])
     } catch (e) {
-      setError(`Couldn't reach the assistant. ${e instanceof Error ? e.message : 'Unknown error'}`)
+      const msg = e instanceof Error ? e.message : 'Unknown error'
+      setError(msg.startsWith('Sign in') || msg.startsWith("You've used") ? msg : `Couldn't reach the assistant. ${msg}`)
     } finally {
       setLoading(false)
     }
@@ -329,17 +333,35 @@ function RenderMessage({ content }: { content: string }) {
   return <div>{parts}</div>
 }
 
+// The model writes light markdown (bold, lists) whatever the prompt says, and printing it
+// raw showed literal "**". Render a small safe subset; headings etc. are unwrapped to text,
+// raw HTML is never rendered (react-markdown default). (Claude, 2026-10-03, for Bhavya's review.)
+const MD_ALLOWED = ['p', 'strong', 'em', 'ul', 'ol', 'li', 'code', 'a', 'br']
+const mdText: React.CSSProperties = {
+  fontFamily: 'var(--font-inter), sans-serif',
+  fontSize: '13px', color: '#E0E0E0', lineHeight: 1.6,
+}
+
 function TextChunk({ text }: { text: string }) {
   // Trim leading/trailing whitespace at boundaries with images
   const t = text.trim()
   if (!t) return null
   return (
-    <p style={{
-      fontFamily: 'var(--font-inter), sans-serif',
-      fontSize: '13px', color: '#E0E0E0',
-      lineHeight: 1.6, margin: 0,
-      whiteSpace: 'pre-wrap',
-    }}>{t}</p>
+    <div style={mdText}>
+      <ReactMarkdown
+        allowedElements={MD_ALLOWED}
+        unwrapDisallowed
+        components={{
+          p: ({ children }) => <p style={{ margin: '0 0 8px' }}>{children}</p>,
+          strong: ({ children }) => <strong style={{ color: '#FFFFFF', fontWeight: 600 }}>{children}</strong>,
+          ul: ({ children }) => <ul style={{ margin: '0 0 8px', paddingLeft: '18px', listStyle: 'disc' }}>{children}</ul>,
+          ol: ({ children }) => <ol style={{ margin: '0 0 8px', paddingLeft: '18px', listStyle: 'decimal' }}>{children}</ol>,
+          li: ({ children }) => <li style={{ marginBottom: '2px' }}>{children}</li>,
+          code: ({ children }) => <code style={{ fontFamily: 'var(--font-mono), monospace', fontSize: '12px', color: '#D4A04D' }}>{children}</code>,
+          a: ({ href, children }) => <a href={href} style={{ color: '#D4A04D', textDecoration: 'underline' }}>{children}</a>,
+        }}
+      >{t}</ReactMarkdown>
+    </div>
   )
 }
 

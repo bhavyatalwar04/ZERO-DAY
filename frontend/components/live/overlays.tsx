@@ -3,22 +3,21 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, AlertTriangle, ChevronRight, Info } from 'lucide-react'
-import { useLiveSession, fmtIST } from '@/lib/contexts/live-session-context'
+import { useLiveSession } from '@/lib/contexts/live-session-context'
 import { useTracer } from '@/lib/behavior/tracer'
 import type { NewsEvent } from '@/types/live'
-import { COV20_NEWS_EVENTS } from '@/lib/data/scenarios/cov-20/live-events'
 
 // ─── News drop overlay ─────────────────────────────────────
 
 export function NewsDropOverlay() {
-  const { state } = useLiveSession()
+  const { state, scenario, clock, market } = useLiveSession()
   const { track } = useTracer()
   const [visible, setVisible] = useState<NewsEvent | null>(null)
   const [acknowledged, setAcknowledged] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     // Find a critical/high signal news that just fired this minute and we haven\'t shown
-    const justFired = COV20_NEWS_EVENTS.find(n =>
+    const justFired = scenario.dataset.news.find(n =>
       n.fireAt === state.currentMinute &&
       n.classification === 'signal' &&
       (n.severity === 'critical' || n.severity === 'high') &&
@@ -92,7 +91,7 @@ export function NewsDropOverlay() {
                 color: visible.severity === 'critical' ? '#FF1F1F' : '#FF1F1F',
                 letterSpacing: '0.22em', textTransform: 'uppercase',
               }}>
-                {visible.severity} · SIGNAL · {fmtIST(visible.fireAt)} IST
+                {visible.severity} · SIGNAL · {clock(visible.fireAt)} {market.tz}
               </span>
               <span style={{
                 fontFamily: 'var(--font-jetbrains), monospace',
@@ -148,7 +147,7 @@ export function NewsDropOverlay() {
 // ─── Circuit breaker BANNER (non-blocking, sits below HUD) ─────────
 
 export function CircuitBreakerOverlay() {
-  const { state, dispatch } = useLiveSession()
+  const { state, dispatch, clock, market } = useLiveSession()
   const halt = state.currentHalt
   if (!halt) return null
 
@@ -180,7 +179,7 @@ export function CircuitBreakerOverlay() {
         fontFamily: 'var(--font-jetbrains), monospace',
         fontSize: '12px', color: '#E0E0E0', fontWeight: 600,
       }}>
-        NIFTY 50 · ▼{halt.level}% · resumes {fmtIST(halt.endsAtMin)} IST
+        NIFTY 50 · ▼{halt.level}% · resumes {clock(halt.endsAtMin)} {market.tz}
       </span>
       <div style={{ flex: 1 }}/>
       <div style={{
@@ -237,7 +236,7 @@ export function CircuitBreakerOverlay() {
 // ─── End of day modal ──────────────────────────────────────
 
 export function EndOfDayModal({ onContinue }: { onContinue: () => void }) {
-  const { state, totalEquity, dayPnL, dayPnLPct } = useLiveSession()
+  const { state, totalEquity, dayPnL, dayPnLPct, scenario, market, clock, money } = useLiveSession()
   const isClosed = state.status === 'CLOSED'
   if (!isClosed) return null
 
@@ -283,7 +282,7 @@ export function EndOfDayModal({ onContinue }: { onContinue: () => void }) {
             <div style={{
               fontFamily: 'var(--font-fraunces), serif', fontWeight: 700,
               fontSize: '28px', color: '#E0E0E0', letterSpacing: '0.04em',
-            }}>9 March 2020 · Bell Rung at 15:30 IST</div>
+            }}>{scenario.dateLabel} · Bell Rung at {clock(market.sessionMinutes)} {market.tz}</div>
           </div>
 
           <div style={{
@@ -294,12 +293,12 @@ export function EndOfDayModal({ onContinue }: { onContinue: () => void }) {
             display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 24px',
             marginBottom: '20px',
           }}>
-            <Stat label="Starting" value={`₹1,00,000`}/>
-            <Stat label="Closing" value={`₹${Math.round(totalEquity).toLocaleString('en-IN')}`}/>
-            <Stat label="Day P&L" value={`${dayPnL >= 0 ? '+' : ''}₹${Math.round(dayPnL).toLocaleString('en-IN')}`} color={dayPnL >= 0 ? '#00C853' : '#FF1F1F'}/>
+            <Stat label="Starting" value={money(totalEquity - dayPnL)}/>
+            <Stat label="Closing" value={money(totalEquity)}/>
+            <Stat label="Day P&L" value={`${dayPnL >= 0 ? '+' : ''}${money(dayPnL)}`} color={dayPnL >= 0 ? '#00C853' : '#FF1F1F'}/>
             <Stat label="Return" value={`${dayPnL >= 0 ? '+' : ''}${dayPnLPct.toFixed(2)}%`} color={dayPnL >= 0 ? '#00C853' : '#FF1F1F'}/>
             <Stat label="Trades" value={`${tradesPlaced}`}/>
-            <Stat label="Realised" value={`${state.realisedPnL >= 0 ? '+' : ''}₹${state.realisedPnL.toFixed(0)}`} color={state.realisedPnL >= 0 ? '#00C853' : '#FF1F1F'}/>
+            <Stat label="Realised" value={`${state.realisedPnL >= 0 ? '+' : ''}${money(state.realisedPnL)}`} color={state.realisedPnL >= 0 ? '#00C853' : '#FF1F1F'}/>
           </div>
 
           <div style={{

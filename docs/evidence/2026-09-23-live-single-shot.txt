@@ -1,0 +1,17 @@
+# Live single-shot strict smoke run — 2026-09-23 — lib/agents/research.live.test.ts (-t single-shot)
+
+ ↓ lib/agents/research.live.test.ts > LIVE research smoke run > llama-3.1-8b-instant: completes without throwing
+ ↓ lib/agents/research.live.test.ts > LIVE research smoke run > qwen/qwen3.8-27b: completes without throwing
+ ↓ lib/agents/research.live.test.ts > LIVE research smoke run > openai/gpt-oss-20b: completes without throwing
+stdout | lib/agents/research.live.test.ts > LIVE single-shot strict smoke run > openai/gpt-oss-20b: strict json_schema accepted and output valid
+══ single-shot openai/gpt-oss-20b → ok (567 ms, 1 call(s))
+  OUTPUT: {"message":"You sold your entire INDIGO position after a 7.9% drop, which suggests a loss‑aversion reaction. Before reacting to a single move, review your exit strategy and consider using a stop‑loss to avoid impulsive decisions.","severity":"warning","bias":"loss_aversion"}
+ ✓ lib/agents/research.live.test.ts > LIVE single-shot strict smoke run > openai/gpt-oss-20b: strict json_schema accepted and output valid 572ms
+stdout | lib/agents/research.live.test.ts > LIVE single-shot strict smoke run > qwen/qwen3.8-27b: strict json_schema accepted and output valid
+══ single-shot qwen/qwen3.8-27b → ok (711 ms, 1 call(s))
+  OUTPUT: {"message":"You sold at the exact moment of maximum volatility and uncertainty. Selling into a post-halt gap down often locks in the worst price. Did you have a pre-defined stop-loss, or did you react to the fear of the halt? Next time, wait for the first 5-10 minutes of post-halt stability to assess if the move is structural or just liquidity shock.","severity":"warning","bias":"panic_selling"}
+ ✓ lib/agents/research.live.test.ts > LIVE single-shot strict smoke run > qwen/qwen3.8-27b: strict json_schema accepted and output valid 712ms
+ Test Files  1 passed (1)
+      Tests  2 passed | 3 skipped (5)
+   Start at  22:13:45
+   Duration  1.88s (transform 130ms, setup 0ms, import 405ms, tests 1.29s, environment 0ms)

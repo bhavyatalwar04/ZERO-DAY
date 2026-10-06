@@ -66,7 +66,7 @@ export function BottomDock({ onShowOrderCoach, onShowSizingCoach }: {
 // ─── Order Ticket ──────────────────────────────────────────
 
 function OrderTicket({ onShowOrderCoach, onShowSizingCoach }: { onShowOrderCoach: () => void; onShowSizingCoach: () => void }) {
-  const { state, dispatch, ltp, prevClose } = useLiveSession()
+  const { state, dispatch, ltp, prevClose, market } = useLiveSession()
   const symbol = state.activeSymbol
   const last = ltp(symbol)
 
@@ -118,7 +118,7 @@ function OrderTicket({ onShowOrderCoach, onShowSizingCoach }: { onShowOrderCoach
   const errorMsg = !qtyValid ? 'Quantity must be at least 1'
     : !priceValid ? 'Limit price must be greater than 0'
     : !triggerValid ? 'Trigger price must be greater than 0'
-    : exceedsCash ? `Insufficient funds — short by ₹${Math.abs(cashAfter).toFixed(0)}`
+    : exceedsCash ? `Insufficient funds — short by ${market.currencySymbol}${Math.abs(cashAfter).toFixed(0)}`
     : sellExceedsPosition ? `You only hold ${positionForSymbol?.qty ?? 0} shares of ${symbol}`
     : !sessionLive ? state.status === 'HALTED' ? 'Trading halted — wait for resumption' : state.status === 'CLOSED' ? 'Market closed' : state.status === 'PAUSED' ? 'Resume the simulation to place orders' : 'Pre-market — wait for the bell'
     : null
@@ -177,10 +177,10 @@ function OrderTicket({ onShowOrderCoach, onShowSizingCoach }: { onShowOrderCoach
           borderRadius: '6px',
         }}>
           <div style={{ fontFamily: 'var(--font-fraunces), serif', fontWeight: 700, fontSize: '15px', color: '#E0E0E0' }}>
-            {symbol} · NSE
+            {symbol} · {market.exchange}
           </div>
           <div style={{ fontFamily: 'var(--font-jetbrains), monospace', fontSize: '11px', color: '#808080', marginTop: '2px' }}>
-            LTP ₹{last.toFixed(2)} · prev ₹{prevClose(symbol).toFixed(2)}
+            LTP {market.currencySymbol}{last.toFixed(2)} · prev {market.currencySymbol}{prevClose(symbol).toFixed(2)}
           </div>
         </div>
         <div>
@@ -235,7 +235,7 @@ function OrderTicket({ onShowOrderCoach, onShowSizingCoach }: { onShowOrderCoach
 
         {type !== 'MARKET' && (
           <div>
-            <Label>Limit price (₹)</Label>
+            <Label>Limit price ({market.currencySymbol})</Label>
             <input
               type="text"
               inputMode="decimal"
@@ -262,12 +262,12 @@ function OrderTicket({ onShowOrderCoach, onShowSizingCoach }: { onShowOrderCoach
                 fontSize: '9px', fontWeight: 700, letterSpacing: '0.14em',
                 textTransform: 'uppercase', cursor: 'pointer',
               }}
-            >Use LTP · ₹{last.toFixed(2)}</button>
+            >Use LTP · {market.currencySymbol}{last.toFixed(2)}</button>
           </div>
         )}
         {(type === 'SL' || type === 'SL-M') && (
           <div>
-            <Label>Trigger price (₹)</Label>
+            <Label>Trigger price ({market.currencySymbol})</Label>
             <input
               type="text"
               inputMode="decimal"
@@ -294,11 +294,11 @@ function OrderTicket({ onShowOrderCoach, onShowSizingCoach }: { onShowOrderCoach
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span>Estimated cost</span>
-            <span style={{ color: '#E0E0E0', fontWeight: 700 }}>₹{cost.toFixed(0)}</span>
+            <span style={{ color: '#E0E0E0', fontWeight: 700 }}>{market.currencySymbol}{cost.toFixed(0)}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span>Cash after</span>
-            <span style={{ color: cashAfter < 0 ? '#FF1F1F' : '#808080' }}>₹{cashAfter.toFixed(0)}</span>
+            <span style={{ color: cashAfter < 0 ? '#FF1F1F' : '#808080' }}>{market.currencySymbol}{cashAfter.toFixed(0)}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span>Position size</span>
@@ -368,7 +368,7 @@ function OrderTicket({ onShowOrderCoach, onShowSizingCoach }: { onShowOrderCoach
             boxShadow: !canPlace ? 'none' : `0 4px 14px ${sideColor}66`,
           }}
         >
-          {!canPlace ? 'CANNOT PLACE ORDER' : `${side} ${qty} ${symbol} @ ${type}${type !== 'MARKET' ? ` ₹${price.toFixed(2)}` : ''}`}
+          {!canPlace ? 'CANNOT PLACE ORDER' : `${side} ${qty} ${symbol} @ ${type}${type !== 'MARKET' ? ` ${market.currencySymbol}${price.toFixed(2)}` : ''}`}
         </button>
         <div style={{
           fontFamily: 'var(--font-inter), sans-serif',
@@ -385,7 +385,7 @@ function OrderTicket({ onShowOrderCoach, onShowSizingCoach }: { onShowOrderCoach
 // ─── Trade Journal ─────────────────────────────────────────
 
 function TradeJournal() {
-  const { state, ltp } = useLiveSession()
+  const { state, ltp, market, clock } = useLiveSession()
   const filled = state.orders.filter(o => o.status === 'FILLED')
   return (
     <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -424,10 +424,10 @@ function TradeJournal() {
           }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
               <span style={{ fontFamily: 'var(--font-jetbrains), monospace', fontSize: '13px', color: c, fontWeight: 700, letterSpacing: '0.06em' }}>
-                {o.side} {o.quantity} {o.symbol} @ ₹{o.filledPrice?.toFixed(2)}
+                {o.side} {o.quantity} {o.symbol} @ {market.currencySymbol}{o.filledPrice?.toFixed(2)}
               </span>
               <span style={{ fontFamily: 'var(--font-jetbrains), monospace', fontSize: '11px', color: '#808080' }}>
-                {o.filledAtMin != null ? `${Math.floor(o.filledAtMin / 60) + 9}:${String(15 + (o.filledAtMin % 60)).padStart(2, '0')} IST` : ''}
+                {o.filledAtMin != null ? `${clock(o.filledAtMin)} ${market.tz}` : ''}
               </span>
             </div>
             {o.reason && (

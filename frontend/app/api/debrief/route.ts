@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { DebriefRequest, DebriefResponse, MistakeId, Mistake } from '@/lib/behavior/types'
+import { V1_DEBRIEF_PARAMS, REASONING_HEADROOM } from '@/lib/ai/v1-model'
+import { requireUser } from '@/lib/auth/require-user'
+import { resolveScenario, marketTime, buildDebriefSystemPrompt } from '@/lib/ai/scenario-prompt'
+import { formatMoney, signedMoney } from '@/lib/engine/markets'
+import type { ScenarioInfo } from '@/lib/engine/scenarios'
 
 export const maxDuration = 30
 
@@ -11,68 +16,9 @@ const VALID_MISTAKE_IDS: ReadonlySet<MistakeId> = new Set<MistakeId>([
   'DISPOSITION_EFFECT', 'OVERTRADING', 'IGNORED_NEWS', 'HELD_THROUGH_CLOSE',
 ])
 
-const SYSTEM_PROMPT = `You are Chronos, a senior Indian-market trading mentor with 15 years of desk experience. You're reviewing a beginner's simulated session on COV-20 (March 9, 2020 — Black Monday).
-
-You will receive a structured behavior report. Your job is a deeply detailed, professorial breakdown — like watching a tape replay with a senior trader narrating.
-
-OUTPUT STRICT JSON. No prose outside the JSON object.
-
-SCHEMA:
-{
-  "narrative": "<4-5 paragraphs, ~400-500 words. Walk through the session chronologically. Frame the market context (NIFTY direction, news drops, circuit breakers). Quote specific timestamps, prices, theses. For EACH meaningful trade, describe: (a) what was happening in the broader market when they entered, (b) what their action was, (c) what the market did after, (d) whether they responded correctly. Use vivid but factual language. No moralizing.>",
-
-  "tradeBreakdown": [
-    {
-      "tradeRef": "Trade 1",
-      "summary": "<2-3 sentences. Quote the exact entry: time, symbol, qty, price, thesis if any. State what NIFTY/BRENT was doing at that moment. State the outcome — did the position go up or down, by how much, was there a stop loss, did it trigger.>",
-      "counterfactual": "<2-3 sentences. The OPTIMAL path. Be specific with numbers: 'A stop loss at ₹X (-Y%) would have capped the loss at ₹Z.' OR 'Entering 5 minutes later at ₹X after the dust settled would have given you a better entry by ₹Y.' OR 'Sizing at 5% of wallet (50 shares not 100) would have made this risk acceptable for a high-conviction trade.' Cite numbers.>",
-      "estimatedAvoidableLoss": <number — estimated rupees saved if optimal path taken; positive number; null if not applicable>
-    }
-    // one entry per significant trade in the session
-  ],
-
-  "criticalMoments": [
-    {
-      "timestamp": "<HH:MM IST>",
-      "description": "<what was happening in the market at this moment>",
-      "youDid": "<the user\\'s action — could be inaction>",
-      "shouldHaveDone": "<the optimal action with numbers>"
-    }
-    // 2-4 entries highlighting the most pivotal decision points
-  ],
-
-  "marketTiming": "<2-3 sentences analyzing WHEN they traded vs market regime. Did they trade during the panic open? During halts? After news drops without checking it? Late in the session when liquidity dried up? Be specific about timing patterns.>",
-
-  "wins": [
-    { "headline": "<5-8 word headline>", "detail": "<1 sentence citing event evidence>" }
-    // 1-2 entries — if they had ZERO wins, output the array empty []
-  ],
-
-  "mistakes": [
-    {
-      "mistakeId": "<MUST match an id in detected_mistakes — never invent>",
-      "headline": "<5-8 word headline naming the pattern>",
-      "explanation": "<2-3 sentences. Name the behavioral pattern, cite EVIDENCE, state why it costs traders money statistically>",
-      "counterfactual": "<2 sentences. The specific corrective action. e.g., 'Set the SL FIRST before entering — the share count then falls out from (max-loss-rupees ÷ stop-distance).' Be prescriptive.>",
-      "evidences": [<every evidence string from detected_mistakes for THIS mistakeId — pull from the input>]
-    }
-    // one entry per UNIQUE mistakeId — group all NO_STOP_LOSS evidences together, etc.
-  ],
-
-  "tomorrow": "<1-2 sentence tactical rule for next session — e.g., 'Set the SL in the order ticket BEFORE writing the thesis. If you can\\'t name a stop level, you don\\'t have a trade.'>"
-}
-
-CONSTRAINTS:
-- Always quote actual numbers from the input (prices, times, percentages, qty).
-- For tradeBreakdown: one entry per trade in the trades[] array provided.
-- Group mistakes by mistakeId — do NOT create multiple entries with the same id.
-- counterfactual is the most important field — that's where the teaching happens. Be SPECIFIC and NUMERICAL.
-- Tone: senior but warm. No condescension. No hedging. Indian-English idioms welcome where natural ("bhai" optional).
-- If trader took zero trades, focus narrative on hesitation; tradeBreakdown can be [].
-- Do NOT invent events not in key_events.
-- Output ONLY the JSON object. No code fences, no preamble.`
-
 export async function POST(req: NextRequest) {
+  const auth = await requireUser('v1-ai')   // P8 + 8.4: signed-in users only, within the hourly limit
+  if (auth instanceof Response) return auth
   const GROQ_KEYS = [
     process.env.GROQ_API_KEY_1,
     process.env.GROQ_API_KEY_2,
@@ -94,6 +40,8 @@ export async function POST(req: NextRequest) {
   if (!body?.profile || !Array.isArray(body.mistakes) || !body.archetype) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
+  const scenario = resolveScenario(body.scenarioId)
+  const minToMarketTime = (min: number) => marketTime(min, scenario.market)
 
   // Build a richer payload — full trade list + grouped mistakes + key event timeline
   const trimmedEvents = (body.keyEvents ?? []).slice(0, 30)
@@ -130,14 +78,14 @@ export async function POST(req: NextRequest) {
       hasThesis: t.hasThesis,
       thesisLength: t.thesisLength,
       filledAtMin: t.filledAtMin,
-      timeStr: minToIST(t.filledAtMin),
+      timeStr: minToMarketTime(t.filledAtMin),
       orderType: t.orderType,
       realizedPnL: Math.round(t.realizedPnL),
     })),
     detected_mistakes_grouped: groupedMistakes,
     key_events: trimmedEvents.map(e => ({
       simMinute: e.simMinute,
-      timeStr: minToIST(e.simMinute),
+      timeStr: minToMarketTime(e.simMinute),
       kind: e.kind,
       data: e.data,
     })),
@@ -157,14 +105,14 @@ export async function POST(req: NextRequest) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
+          ...V1_DEBRIEF_PARAMS,   // P7: was llama-3.3-70b-versatile (not on the key)
           messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
+            { role: 'system', content: buildDebriefSystemPrompt(scenario) },
             { role: 'user', content: userPrompt },
           ],
           response_format: { type: 'json_object' },
           temperature: 0.4,
-          max_tokens: 3000,
+          max_tokens: 3000 + REASONING_HEADROOM,
         }),
       })
 
@@ -184,7 +132,7 @@ export async function POST(req: NextRequest) {
       const raw = data?.choices?.[0]?.message?.content ?? ''
       const json = parseJsonRobust(raw)
       if (!json) {
-        return NextResponse.json(richFallback(body), { status: 200 })
+        return NextResponse.json(richFallback(body, scenario), { status: 200 })
       }
 
       const validated = validateResponse(json, body.mistakes)
@@ -197,7 +145,7 @@ export async function POST(req: NextRequest) {
   }
 
   console.error('[debrief] all keys failed:', lastError)
-  return NextResponse.json(richFallback(body), { status: 200 })
+  return NextResponse.json(richFallback(body, scenario), { status: 200 })
 }
 
 // ── helpers ──────────────────────────────────────────────────
@@ -205,11 +153,6 @@ export async function POST(req: NextRequest) {
 function round(n: number, d: number): number {
   const p = Math.pow(10, d)
   return Math.round(n * p) / p
-}
-
-function minToIST(min: number): string {
-  const total = 9 * 60 + 15 + Math.floor(min)
-  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')} IST`
 }
 
 function groupMistakes(mistakes: Mistake[]): Array<{ id: string; severity: string; evidences: string[] }> {
@@ -292,14 +235,15 @@ function emptyFallback(reason: string): DebriefResponse {
   }
 }
 
-function richFallback(body: DebriefRequest): DebriefResponse {
+function richFallback(body: DebriefRequest, scenario: ScenarioInfo): DebriefResponse {
   const p = body.profile
+  const { market } = scenario
   const groupedMistakes = groupMistakes(body.mistakes)
   return {
-    narrative: `You closed the session with ${p.dayPnL >= 0 ? '+' : ''}₹${Math.round(p.dayPnL)} on a day NIFTY fell sharply. You placed ${p.tradeCount} trade${p.tradeCount === 1 ? '' : 's'} (${p.buyCount} buys, ${p.sellCount} sells), with a ${Math.round(p.winRate * 100)}% win rate. Average position size was ${(p.avgPositionSizePct * 100).toFixed(0)}% of wallet. Stop loss usage: ${Math.round(p.slUsageRate * 100)}%. (LLM unavailable — showing rules-based summary only.)`,
+    narrative: `You closed the session with ${signedMoney(p.dayPnL, market)} on ${scenario.title} (${scenario.dateLabel}). You placed ${p.tradeCount} trade${p.tradeCount === 1 ? '' : 's'} (${p.buyCount} buys, ${p.sellCount} sells), with a ${Math.round(p.winRate * 100)}% win rate. Average position size was ${(p.avgPositionSizePct * 100).toFixed(0)}% of wallet. Stop loss usage: ${Math.round(p.slUsageRate * 100)}%. (LLM unavailable — showing rules-based summary only.)`,
     tradeBreakdown: p.trades.map((t, i) => ({
       tradeRef: `Trade ${i + 1}`,
-      summary: `${t.side} ${t.qty} ${t.symbol} @ ₹${t.price} at ${minToIST(t.filledAtMin)}. Sizing ${(t.sizingPct * 100).toFixed(0)}% of wallet.`,
+      summary: `${t.side} ${t.qty} ${t.symbol} @ ${formatMoney(t.price, market, 2)} at ${marketTime(t.filledAtMin, market)}. Sizing ${(t.sizingPct * 100).toFixed(0)}% of wallet.`,
       counterfactual: 'Set a stop loss before entry; size off the stop distance.',
     })),
     criticalMoments: [],
@@ -314,6 +258,6 @@ function richFallback(body: DebriefRequest): DebriefResponse {
       counterfactual: 'Apply the relevant rule from the Academy playlists.',
       evidences: g.evidences,
     })),
-    tomorrow: 'Set a stop loss before clicking Place Order. Define rupee risk first, then derive share count.',
+    tomorrow: 'Set a stop loss before clicking Place Order. Define your maximum loss first, then derive share count.',
   }
 }

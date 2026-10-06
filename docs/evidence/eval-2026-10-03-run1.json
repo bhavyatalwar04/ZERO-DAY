@@ -1,0 +1,1771 @@
+{
+  "meta": {
+    "date": "2026-10-03",
+    "models": {
+      "research": "qwen/qwen3.8-27b",
+      "coach": "openai/gpt-oss-20b",
+      "single prompt": "openai/gpt-oss-20b"
+    }
+  },
+  "summary": [
+    {
+      "system": "A",
+      "detectionCorrect": 15,
+      "cases": 15,
+      "falsePositives": 0,
+      "meanScore": 0.99,
+      "fullMarks": 11,
+      "positives": 12,
+      "checkPass": {
+        "valid": 12,
+        "grounded": 12,
+        "noStopLoss": 12,
+        "namesPattern": 12,
+        "directionConsistent": 12,
+        "actionable": 11,
+        "hasQuestion": 12
+      },
+      "medianLatencyMs": 3059,
+      "meanTokens": 6994,
+      "researchOk": 9
+    },
+    {
+      "system": "B",
+      "detectionCorrect": 15,
+      "cases": 15,
+      "falsePositives": 0,
+      "meanScore": 0.92,
+      "fullMarks": 11,
+      "positives": 12,
+      "checkPass": {
+        "valid": 11,
+        "grounded": 11,
+        "noStopLoss": 11,
+        "namesPattern": 11,
+        "directionConsistent": 11,
+        "actionable": 11,
+        "hasQuestion": 11
+      },
+      "medianLatencyMs": 816,
+      "meanTokens": 1013
+    },
+    {
+      "system": "C",
+      "detectionCorrect": 9,
+      "cases": 15,
+      "falsePositives": 0,
+      "meanScore": 0.63,
+      "fullMarks": 6,
+      "positives": 12,
+      "checkPass": {
+        "valid": 8,
+        "grounded": 8,
+        "noStopLoss": 8,
+        "namesPattern": 6,
+        "directionConsistent": 8,
+        "actionable": 7,
+        "hasQuestion": 8
+      },
+      "medianLatencyMs": 1086,
+      "meanTokens": 1772
+    },
+    {
+      "system": "T",
+      "detectionCorrect": 15,
+      "cases": 15,
+      "falsePositives": 0,
+      "meanScore": 1,
+      "fullMarks": 12,
+      "positives": 12,
+      "checkPass": {
+        "valid": 12,
+        "grounded": 12,
+        "noStopLoss": 12,
+        "namesPattern": 12,
+        "directionConsistent": 12,
+        "actionable": 12,
+        "hasQuestion": 12
+      },
+      "medianLatencyMs": 0,
+      "meanTokens": 0
+    }
+  ],
+  "results": [
+    {
+      "id": "panic-1",
+      "title": "Sells all INDIGO at a loss while it is deep red and falling",
+      "expected": "panic_sell",
+      "truth": {
+        "symbol": "INDIGO",
+        "price": 1142.98,
+        "prevClose": 1247.5,
+        "dayChangePct": -8.38,
+        "move15Pct": -1.6,
+        "direction": "down",
+        "niftyDayChangePct": -5.92
+      },
+      "results": [
+        {
+          "system": "T",
+          "detected": "panic_sell",
+          "feedback": {
+            "message": "Sold INDIGO at 1142.98, 3.65% below the average cost of 1186.3, while it was 8.38% below the previous close and had fallen 1.6% in the last 15 minutes. Selling a loser while the screen is deep red is often fear talking, not a plan. Next time, pause for a few minutes and check whether your reason for owning it has changed.",
+            "severity": "warning",
+            "question": "What would have made you sell before the price started falling?"
+          },
+          "status": "ok",
+          "latencyMs": 0,
+          "tokens": 0,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        },
+        {
+          "system": "A",
+          "detected": "panic_sell",
+          "feedback": {
+            "message": "You sold INDIGO at a 3.65% loss in a panic sell pattern. This means you exited before the market could recover, costing you potential upside. Try pausing a few minutes and writing down a reason before selling next time.",
+            "severity": "warning",
+            "question": "What could you do differently if you feel the urge to sell in a panic?"
+          },
+          "status": "ok",
+          "latencyMs": 1098,
+          "tokens": 1375,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          },
+          "research": {
+            "status": "ok",
+            "tokens": 6581,
+            "latencyMs": 2234,
+            "summary": "BRENT crude fell 1.61% to 44.54, and VIX rose 3.6% to 32.18, indicating elevated market stress. NIFTY dropped 5.92% to 10338.83, and SENSEX fell 5.8% to 35396.94, reflecting broad market weakness. INDIGO was trading at 1142.98, 8.38% below its previous close of 1247.5, and 3.65% below the user's average cost of 1186.3. The stock had fallen 3.65% over the last 30 minutes, from 1186.3 to 1142.98, and was at its day low."
+          }
+        },
+        {
+          "system": "B",
+          "detected": "panic_sell",
+          "feedback": {
+            "message": "You sold INDIGO in a panic, cutting your position 3.65% below cost. This pattern often locks in losses before the market recovers. Next time, pause for a few minutes or write down a reason before selling.",
+            "severity": "caution",
+            "question": "What would you do differently if the price fell again?"
+          },
+          "status": "ok",
+          "latencyMs": 980,
+          "tokens": 1052,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        },
+        {
+          "system": "C",
+          "detected": null,
+          "feedback": null,
+          "status": "invalid_output",
+          "error": "attempt 1: These numbers are not in the facts you were given: 2.\nattempt 2: These numbers are not in the facts you were given: 2.",
+          "latencyMs": 2367,
+          "tokens": 3224,
+          "score": {
+            "checks": {
+              "valid": false,
+              "grounded": false,
+              "noStopLoss": false,
+              "namesPattern": false,
+              "directionConsistent": false,
+              "actionable": false,
+              "hasQuestion": false
+            },
+            "passed": 0,
+            "total": 7,
+            "ungrounded": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "panic-2",
+      "title": "Sells all RELIANCE at a loss while it is deep red and falling",
+      "expected": "panic_sell",
+      "truth": {
+        "symbol": "RELIANCE",
+        "price": 1223.2,
+        "prevClose": 1356.1,
+        "dayChangePct": -9.8,
+        "move15Pct": -1.57,
+        "direction": "down",
+        "niftyDayChangePct": -5.92
+      },
+      "results": [
+        {
+          "system": "T",
+          "detected": "panic_sell",
+          "feedback": {
+            "message": "Sold RELIANCE at 1223.2, 3.24% below the average cost of 1264.22, while it was 9.8% below the previous close and had fallen 1.57% in the last 15 minutes. Selling a loser while the screen is deep red is often fear talking, not a plan. Next time, pause for a few minutes and check whether your reason for owning it has changed.",
+            "severity": "warning",
+            "question": "What would have made you sell before the price started falling?"
+          },
+          "status": "ok",
+          "latencyMs": 0,
+          "tokens": 0,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        },
+        {
+          "system": "A",
+          "detected": "panic_sell",
+          "feedback": {
+            "message": "You sold RELIANCE in a panic, cutting a 3.24% loss before the market had a chance to recover. This pattern often locks in losses and misses rebounds. Try pausing for a few minutes or writing down a reason before selling.",
+            "severity": "warning",
+            "question": "What could you have done differently to avoid selling in a panic?"
+          },
+          "status": "ok",
+          "latencyMs": 966,
+          "tokens": 1333,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          },
+          "research": {
+            "status": "ok",
+            "tokens": 6575,
+            "latencyMs": 2185,
+            "summary": "RELIANCE was trading at 1223.2 at 09:45, down 9.8% from the previous close of 1356.1 and down 3.24% from the 09:15 start of 1264.22. The broader market was in a sharp sell-off: NIFTY was at 10338.83, down 5.92% vs previous close, and BANKNIFTY was down 7.73%. News in the prior hour included Italy extending its nationwide lockdown (09:32) and NIFTY opening 4.2% lower (09:25). The user's RELIANCE position was 11 shares at an average cost of 1264.22, with an unrealised loss of -451.22 (-3.24%)."
+          }
+        },
+        {
+          "system": "B",
+          "detected": "panic_sell",
+          "feedback": {
+            "message": "You sold RELIANCE in a panic, taking a 3.24% loss before the market had a chance to recover. This pattern often locks in losses and misses rebounds. Try pausing a few minutes before selling or writing down a reason first.",
+            "severity": "warning",
+            "question": "What would you do differently if you saw a similar drop?"
+          },
+          "status": "ok",
+          "latencyMs": 816,
+          "tokens": 936,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        },
+        {
+          "system": "C",
+          "detected": null,
+          "feedback": null,
+          "status": "error",
+          "error": "http: Groq 400: {\"error\":{\"message\":\"Failed to validate JSON. Please adjust your prompt. See 'failed_generation' for more details.\",\"type\":\"invalid_request_error\",\"code\":\"json_validate_failed\",\"failed_generation\":\"\"}}\n",
+          "latencyMs": 2432,
+          "tokens": 1404,
+          "score": {
+            "checks": {
+              "valid": false,
+              "grounded": false,
+              "noStopLoss": false,
+              "namesPattern": false,
+              "directionConsistent": false,
+              "actionable": false,
+              "hasQuestion": false
+            },
+            "passed": 0,
+            "total": 7,
+            "ungrounded": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "avgdown-1",
+      "title": "Buys more TITAN while the position is underwater",
+      "expected": "averaging_down",
+      "truth": {
+        "symbol": "TITAN",
+        "price": 999.58,
+        "prevClose": 1085,
+        "dayChangePct": -7.87,
+        "move15Pct": 0.05,
+        "direction": "down",
+        "niftyDayChangePct": -5.87
+      },
+      "results": [
+        {
+          "system": "T",
+          "detected": "averaging_down",
+          "feedback": {
+            "message": "Bought 12 more TITAN at 999.58 while the existing 11 shares were 3.19% below their average cost of 1032.52. Adding to a losing position raises your stake in a call that has not worked yet. Before adding, write down what is different now from your first buy.",
+            "severity": "caution",
+            "question": "What has changed since your first buy that makes this a better entry?"
+          },
+          "status": "ok",
+          "latencyMs": 0,
+          "tokens": 0,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        },
+        {
+          "system": "A",
+          "detected": "averaging_down",
+          "feedback": {
+            "message": "You averaged down on TITAN by buying more shares when the price was already below your average cost. This raises your average cost and can lock in larger losses if the price continues to fall. Try pausing before buying and write down a clear reason for the trade instead.",
+            "severity": "warning",
+            "question": "What would you write down as a reason for buying more shares at this price?"
+          },
+          "status": "ok",
+          "latencyMs": 892,
+          "tokens": 932,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          },
+          "research": {
+            "status": "error",
+            "error": "rate_limited: All 1 Groq keys returned 429: Rate limit reached for model `qwen/qwen3.8-27b` in organization `org_01krh23ftpf9db3f56cdmnxkhs` service tier `on_demand` on input tokens per minute (ITPM): Limit 7000, Used 5625, Requested 2301. Please try again in 7.937142857s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.co; retry after 8000 ms",
+            "tokens": 3753,
+            "latencyMs": 2485
+          }
+        },
+        {
+          "system": "B",
+          "detected": "averaging_down",
+          "feedback": {
+            "message": "You averaged down on TITAN, adding more shares when the price was already below your cost. This can deepen losses if the price keeps falling. Try pausing before buying, or write down a clear reason for the trade first.",
+            "severity": "caution",
+            "question": "What would you do differently if you saw the same price drop again?"
+          },
+          "status": "ok",
+          "latencyMs": 718,
+          "tokens": 833,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        },
+        {
+          "system": "C",
+          "detected": "averaging_down",
+          "feedback": {
+            "pattern": "averaging_down",
+            "message": "You just averaged down on TITAN by buying more shares at a price well below your average cost. While this can reduce your cost basis, it also increases exposure to a falling market. Try pausing before buying and write down why you think the price will recover.",
+            "severity": "caution",
+            "question": "What evidence do you have that the price will rebound before you add more shares?"
+          },
+          "status": "ok",
+          "latencyMs": 1018,
+          "tokens": 1514,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "avgdown-2",
+      "title": "Buys more INDIGO while the position is underwater",
+      "expected": "averaging_down",
+      "truth": {
+        "symbol": "INDIGO",
+        "price": 1149.03,
+        "prevClose": 1247.5,
+        "dayChangePct": -7.89,
+        "move15Pct": 0.37,
+        "direction": "down",
+        "niftyDayChangePct": -5.68
+      },
+      "results": [
+        {
+          "system": "T",
+          "detected": "averaging_down",
+          "feedback": {
+            "message": "Bought 10 more INDIGO at 1149.03 while the existing 10 shares were 3.14% below their average cost of 1186.3. Adding to a losing position raises your stake in a call that has not worked yet. Before adding, write down what is different now from your first buy.",
+            "severity": "caution",
+            "question": "What has changed since your first buy that makes this a better entry?"
+          },
+          "status": "ok",
+          "latencyMs": 0,
+          "tokens": 0,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        },
+        {
+          "system": "A",
+          "detected": "averaging_down",
+          "feedback": {
+            "message": "You averaged down by buying more shares when the price was already below your average cost. This can deepen losses if the price keeps falling. Try pausing before buying and write down a reason for the trade instead.",
+            "severity": "warning",
+            "question": "What would you do differently if the price had moved further down after your purchase?"
+          },
+          "status": "ok",
+          "latencyMs": 990,
+          "tokens": 1050,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          },
+          "research": {
+            "status": "error",
+            "error": "rate_limited: All 1 Groq keys returned 429: Rate limit reached for model `qwen/qwen3.8-27b` in organization `org_01krh23ftpf9db3f56cdmnxkhs` service tier `on_demand` on input tokens per minute (ITPM): Limit 7000, Used 5613, Requested 2291. Please try again in 7.748571428s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.co; retry after 8000 ms",
+            "tokens": 3744,
+            "latencyMs": 2449
+          }
+        },
+        {
+          "system": "B",
+          "detected": "averaging_down",
+          "feedback": null,
+          "status": "error",
+          "error": "http: Groq 400: {\"error\":{\"message\":\"Failed to validate JSON. Please adjust your prompt. See 'failed_generation' for more details.\",\"type\":\"invalid_request_error\",\"code\":\"json_validate_failed\",\"failed_generation\":\"\"}}\n",
+          "latencyMs": 1562,
+          "tokens": 0,
+          "score": {
+            "checks": {
+              "valid": false,
+              "grounded": false,
+              "noStopLoss": false,
+              "namesPattern": false,
+              "directionConsistent": false,
+              "actionable": false,
+              "hasQuestion": false
+            },
+            "passed": 0,
+            "total": 7,
+            "ungrounded": []
+          }
+        },
+        {
+          "system": "C",
+          "detected": "averaging_down",
+          "feedback": {
+            "pattern": "averaging_down",
+            "message": "You just averaged down on INDIGO by buying more shares at a price below your average cost. This increases your risk if the price keeps falling. Try pausing before buying and write down why you think the price will recover.",
+            "severity": "caution",
+            "question": "What evidence do you have that INDIGO’s price will recover before you buy more?"
+          },
+          "status": "ok",
+          "latencyMs": 1680,
+          "tokens": 2906,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "revenge-1",
+      "title": "After a losing RELIANCE trade, buys INDIGO at about 2.5× the size",
+      "expected": "revenge_trade",
+      "truth": {
+        "symbol": "INDIGO",
+        "price": 1150.88,
+        "prevClose": 1247.5,
+        "dayChangePct": -7.75,
+        "move15Pct": -1.62,
+        "direction": "down",
+        "niftyDayChangePct": -5.13
+      },
+      "results": [
+        {
+          "system": "T",
+          "detected": "revenge_trade",
+          "feedback": {
+            "message": "Bought 26 INDIGO worth 29922.88, 2.71× the size of the RELIANCE sale that lost 89.82 2 minutes earlier. A bigger trade right after a loss is often an attempt to win it back quickly. After a loss, wait a few minutes and keep the next trade no bigger than the last.",
+            "severity": "warning",
+            "question": "Would you have placed this trade if the last one had been a win?"
+          },
+          "status": "ok",
+          "latencyMs": 0,
+          "tokens": 0,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        },
+        {
+          "system": "A",
+          "detected": "revenge_trade",
+          "feedback": {
+            "message": "You just bought INDIGO after a loss on RELIANCE, a revenge trade. This can amplify losses because you’re chasing a win. Try pausing a few minutes before buying and write down why you’re entering the trade.",
+            "severity": "warning",
+            "question": "What would you write down as your reason for buying INDIGO right now?"
+          },
+          "status": "ok",
+          "latencyMs": 928,
+          "tokens": 1117,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          },
+          "research": {
+            "status": "ok",
+            "tokens": 6166,
+            "latencyMs": 1745,
+            "summary": "Revenge trade"
+          }
+        },
+        {
+          "system": "B",
+          "detected": "revenge_trade",
+          "feedback": {
+            "message": "You reacted to the loss by buying a much larger position in INDIGO just 2 minutes later, which is a revenge trade. This can amplify losses and erode your capital. Try pausing before acting and write down a clear reason for the trade instead.",
+            "severity": "warning",
+            "question": "What would you write down as a reason for buying INDIGO before you act?"
+          },
+          "status": "ok",
+          "latencyMs": 1020,
+          "tokens": 1060,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        },
+        {
+          "system": "C",
+          "detected": null,
+          "feedback": {
+            "pattern": "none",
+            "message": "You made a BUY of INDIGO at 09:43, which doesn't match any of the warning patterns. Great job keeping your actions within the simulator’s guidelines! Keep tracking how each trade fits your overall strategy.",
+            "severity": "info",
+            "question": "What was your main reason for buying INDIGO at that time?"
+          },
+          "status": "ok",
+          "latencyMs": 1229,
+          "tokens": 1503,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": false,
+              "directionConsistent": true,
+              "actionable": false,
+              "hasQuestion": true
+            },
+            "passed": 5,
+            "total": 7,
+            "ungrounded": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "revenge-2",
+      "title": "After a losing TCS trade, buys INDIGO at about 2.5× the size",
+      "expected": "revenge_trade",
+      "truth": {
+        "symbol": "INDIGO",
+        "price": 1151.62,
+        "prevClose": 1247.5,
+        "dayChangePct": -7.69,
+        "move15Pct": -0.16,
+        "direction": "down",
+        "niftyDayChangePct": -5.61
+      },
+      "results": [
+        {
+          "system": "T",
+          "detected": "revenge_trade",
+          "feedback": {
+            "message": "Bought 26 INDIGO worth 29942.12, 2.87× the size of the TCS sale that lost 64.2 2 minutes earlier. A bigger trade right after a loss is often an attempt to win it back quickly. After a loss, wait a few minutes and keep the next trade no bigger than the last.",
+            "severity": "warning",
+            "question": "Would you have placed this trade if the last one had been a win?"
+          },
+          "status": "ok",
+          "latencyMs": 0,
+          "tokens": 0,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        },
+        {
+          "system": "A",
+          "detected": "revenge_trade",
+          "feedback": {
+            "message": "You just bought INDIGO after a loss on TCS, a revenge trade. This pattern can amplify losses and erode your capital. Try pausing a few minutes before buying and write down why you think the trade is justified.",
+            "severity": "warning",
+            "question": "What would you write down as the reason for buying INDIGO before you act?"
+          },
+          "status": "ok",
+          "latencyMs": 988,
+          "tokens": 1141,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          },
+          "research": {
+            "status": "ok",
+            "tokens": 6361,
+            "latencyMs": 1978,
+            "summary": "9 March 2020, 11:42: NIFTY at 10373.35, down 5.61% vs previous close, with a level-5 circuit-breaker halt from 10:32 to 10:47. VIX at 35.03, up 12.79% vs previous close. INDIGO at 1151.62, down 7.69% vs previous close, trading below its 20-min SMA (1153.33) and VWAP (1152.44), RSI(14) at 35.85. The user's INDIGO position shows qty 0, cash 99935.8, and realised P&L today of -64.2."
+          }
+        },
+        {
+          "system": "B",
+          "detected": "revenge_trade",
+          "feedback": {
+            "message": "You just bought INDIGO after a loss on TCS, a revenge trade. This pattern can magnify losses because you’re chasing a win. Try pausing before acting or writing down a reason before buying.",
+            "severity": "warning",
+            "question": "What would you write down as your reason for buying INDIGO before you act?"
+          },
+          "status": "ok",
+          "latencyMs": 720,
+          "tokens": 822,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        },
+        {
+          "system": "C",
+          "detected": null,
+          "feedback": null,
+          "status": "error",
+          "error": "http: Groq 400: {\"error\":{\"message\":\"Failed to generate JSON. Please adjust your prompt. See 'failed_generation' for more details.\",\"type\":\"invalid_request_error\",\"code\":\"json_validate_failed\",\"failed_generation\":\"max completion tokens reached before generating a valid document\"}}\n",
+          "latencyMs": 1350,
+          "tokens": 0,
+          "score": {
+            "checks": {
+              "valid": false,
+              "grounded": false,
+              "noStopLoss": false,
+              "namesPattern": false,
+              "directionConsistent": false,
+              "actionable": false,
+              "hasQuestion": false
+            },
+            "passed": 0,
+            "total": 7,
+            "ungrounded": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "news-1",
+      "title": "Buys SUNPHARMA in the same minute as the headline \"NIFTY opens at 10,524 — gap-down 4.2%, broadest se…\"",
+      "expected": "news_reflex",
+      "truth": {
+        "symbol": "SUNPHARMA",
+        "price": 426.51,
+        "prevClose": 428.2,
+        "dayChangePct": -0.39,
+        "move15Pct": -1.03,
+        "direction": "flat",
+        "niftyDayChangePct": -2.2
+      },
+      "results": [
+        {
+          "system": "T",
+          "detected": "news_reflex",
+          "feedback": {
+            "message": "Placed a BUY order for SUNPHARMA in the same minute as the headline \"NIFTY opens at 10,524 — gap-down 4.2%, broadest sell-off in 11 years\", without pausing. Trading within moments of a headline leaves no time to judge whether it matters. Next time, pause the clock and read the headline twice before acting.",
+            "severity": "caution",
+            "question": "What did this headline tell you that the price had not already shown?"
+          },
+          "status": "ok",
+          "latencyMs": 0,
+          "tokens": 0,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        },
+        {
+          "system": "A",
+          "detected": "news_reflex",
+          "feedback": {
+            "message": "You reacted immediately to the headline by buying SUNPHARMA. This news reflex can lead to buying at a high point before the market corrects. Try pausing a few minutes or writing down your reason before acting.",
+            "severity": "caution",
+            "question": "What would you write down as your reason for buying SUNPHARMA after the news?"
+          },
+          "status": "ok",
+          "latencyMs": 821,
+          "tokens": 1066,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          },
+          "research": {
+            "status": "ok",
+            "tokens": 6341,
+            "latencyMs": 1755,
+            "summary": "News Reflex"
+          }
+        },
+        {
+          "system": "B",
+          "detected": "news_reflex",
+          "feedback": {
+            "message": "You reacted immediately to the headline by buying SUNPHARMA. This news reflex can lead to buying at a peak, especially when markets are volatile. Try pausing for a few minutes or writing down your reason before placing the order.",
+            "severity": "caution",
+            "question": "What would you write down as your reason for buying SUNPHARMA after seeing the headline?"
+          },
+          "status": "ok",
+          "latencyMs": 797,
+          "tokens": 954,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        },
+        {
+          "system": "C",
+          "detected": "news_reflex",
+          "feedback": {
+            "pattern": "news_reflex",
+            "message": "You just made a news reflex trade. Acting immediately on a headline without pausing can lead to impulsive decisions. Try pausing for a few minutes before placing an order after a news event.",
+            "severity": "caution",
+            "question": "What was your reasoning for buying SUNPHARMA right after the headline?"
+          },
+          "status": "ok",
+          "latencyMs": 773,
+          "tokens": 1229,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "news-2",
+      "title": "Buys HDFCBANK in the same minute as the headline \"Italy extends lockdown to entire country — 60M res…\"",
+      "expected": "news_reflex",
+      "truth": {
+        "symbol": "HDFCBANK",
+        "price": 1002.25,
+        "prevClose": 1054.25,
+        "dayChangePct": -4.93,
+        "move15Pct": -1.13,
+        "direction": "down",
+        "niftyDayChangePct": -3.35
+      },
+      "results": [
+        {
+          "system": "T",
+          "detected": "news_reflex",
+          "feedback": {
+            "message": "Placed a BUY order for HDFCBANK in the same minute as the headline \"Italy extends lockdown to entire country — 60M residents under restriction\", without pausing. Trading within moments of a headline leaves no time to judge whether it matters. Next time, pause the clock and read the headline twice before acting.",
+            "severity": "caution",
+            "question": "What did this headline tell you that the price had not already shown?"
+          },
+          "status": "ok",
+          "latencyMs": 0,
+          "tokens": 0,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        },
+        {
+          "system": "A",
+          "detected": "news_reflex",
+          "feedback": {
+            "message": "You reacted immediately to the headline by buying HDFCBANK. This news reflex can lead to buying on hype before the market digests the information. Try pausing a few minutes or writing down why you think the news should affect the stock before acting.",
+            "severity": "caution",
+            "question": "What would you write down as your reason for buying HDFCBANK after the headline?"
+          },
+          "status": "ok",
+          "latencyMs": 687,
+          "tokens": 1063,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          },
+          "research": {
+            "status": "ok",
+            "tokens": 6323,
+            "latencyMs": 2262,
+            "summary": "India's largest private bank"
+          }
+        },
+        {
+          "system": "B",
+          "detected": "news_reflex",
+          "feedback": {
+            "message": "You reacted immediately to the news headline by buying HDFCBANK. This news reflex can lead to buying on hype rather than analysis, which often results in losses. Next time, pause for a few minutes or write down a reason before acting.",
+            "severity": "warning",
+            "question": "What would you write down as your reason for buying before acting next time?"
+          },
+          "status": "ok",
+          "latencyMs": 775,
+          "tokens": 884,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        },
+        {
+          "system": "C",
+          "detected": "news_reflex",
+          "feedback": {
+            "pattern": "news_reflex",
+            "message": "You just made a news reflex trade. Acting immediately on headlines can lead to impulsive decisions. Try pausing a few minutes before placing an order to assess the broader market context.",
+            "severity": "caution",
+            "question": "What was your reasoning for buying HDFCBANK right after the headline?"
+          },
+          "status": "ok",
+          "latencyMs": 944,
+          "tokens": 1287,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "oversized-1",
+      "title": "Puts about 45% of the account into RELIANCE in one order",
+      "expected": "oversized_position",
+      "truth": {
+        "symbol": "RELIANCE",
+        "price": 1208.45,
+        "prevClose": 1356.1,
+        "dayChangePct": -10.89,
+        "move15Pct": -1.54,
+        "direction": "down",
+        "niftyDayChangePct": -7.75
+      },
+      "results": [
+        {
+          "system": "T",
+          "detected": "oversized_position",
+          "feedback": {
+            "message": "Bought 37 RELIANCE worth 44712.65: 44.71% of the account in one order. Putting a large share of the account into one order makes a single mistake expensive. Try sizing smaller, so one wrong call cannot sink the account.",
+            "severity": "caution",
+            "question": "How much of your account are you willing to lose on one idea?"
+          },
+          "status": "ok",
+          "latencyMs": 0,
+          "tokens": 0,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        },
+        {
+          "system": "A",
+          "detected": "oversized_position",
+          "feedback": {
+            "message": "You took an oversized position in RELIANCE, using almost 45% of your equity in one trade. This can expose you to large losses if the price moves against you. Try sizing the trade smaller or writing down your reason before buying.",
+            "severity": "caution",
+            "question": "What would you do differently if you had to trade this stock again?"
+          },
+          "status": "ok",
+          "latencyMs": 1054,
+          "tokens": 1001,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          },
+          "research": {
+            "status": "error",
+            "error": "rate_limited: All 1 Groq keys returned 429: Rate limit reached for model `qwen/qwen3.8-27b` in organization `org_01krh23ftpf9db3f56cdmnxkhs` service tier `on_demand` on input tokens per minute (ITPM): Limit 7000, Used 5562, Requested 2505. Please try again in 9.145714285s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.co; retry after 10000 ms",
+            "tokens": 5852,
+            "latencyMs": 1250
+          }
+        },
+        {
+          "system": "B",
+          "detected": "oversized_position",
+          "feedback": {
+            "message": "You used 44.71% of your equity in a single trade, which is a large concentration. This can expose you to significant losses if the stock moves against you. Try sizing the trade smaller or writing down a reason before committing.",
+            "severity": "warning",
+            "question": "How might you adjust your position sizing to reduce risk?"
+          },
+          "status": "ok",
+          "latencyMs": 1600,
+          "tokens": 1911,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        },
+        {
+          "system": "C",
+          "detected": null,
+          "feedback": {
+            "pattern": "none",
+            "message": "You didn't trigger any of the patterns. Good job staying calm. Next time, consider pausing before acting to confirm your strategy.",
+            "severity": "info",
+            "question": "What was your main reason for buying RELIANCE at this time?"
+          },
+          "status": "ok",
+          "latencyMs": 961,
+          "tokens": 1187,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": false,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 6,
+            "total": 7,
+            "ungrounded": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "oversized-2",
+      "title": "Puts about 45% of the account into TITAN in one order",
+      "expected": "oversized_position",
+      "truth": {
+        "symbol": "TITAN",
+        "price": 1002.5,
+        "prevClose": 1085,
+        "dayChangePct": -7.6,
+        "move15Pct": -0.22,
+        "direction": "down",
+        "niftyDayChangePct": -5.59
+      },
+      "results": [
+        {
+          "system": "T",
+          "detected": "oversized_position",
+          "feedback": {
+            "message": "Bought 44 TITAN worth 44110: 44.11% of the account in one order. Putting a large share of the account into one order makes a single mistake expensive. Try sizing smaller, so one wrong call cannot sink the account.",
+            "severity": "caution",
+            "question": "How much of your account are you willing to lose on one idea?"
+          },
+          "status": "ok",
+          "latencyMs": 0,
+          "tokens": 0,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        },
+        {
+          "system": "A",
+          "detected": "oversized_position",
+          "feedback": {
+            "message": "You took an oversized position in TITAN, using 44% of your equity in one trade. This can expose you to large swings and reduce flexibility. Try sizing the trade smaller or pausing before acting.",
+            "severity": "caution",
+            "question": "What would you do differently if you had a smaller position size?"
+          },
+          "status": "ok",
+          "latencyMs": 996,
+          "tokens": 1430,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          },
+          "research": {
+            "status": "ok",
+            "tokens": 6407,
+            "latencyMs": 2706,
+            "summary": "9 March 2020, 11:35 IST: TITAN trades at 1002.5, down 7.6% from the previous close of 1085, after a 15-minute circuit-breaker halt (level 5) from 10:32 to 10:47. The broader market is sharply lower: NIFTY at 10375.62 (-5.59% vs prev close), SENSEX at 35535.34 (-5.43%), BANKNIFTY at 25578.86 (-7.09%), and VIX at 35.15 (+13.18%). TITAN's RSI(14) on 5-minute bars is 35.76, price is 0.37% below session VWAP (1006.19), and it sits 3.1% below the day high (1034.52) and 1.33% above the day low (989"
+          }
+        },
+        {
+          "system": "B",
+          "detected": "oversized_position",
+          "feedback": {
+            "message": "You took an oversized position in TITAN, using 44% of your equity in one trade. This concentrates risk and can hurt your portfolio if the stock moves against you. Try sizing the trade smaller or pausing to review your plan before committing.",
+            "severity": "caution",
+            "question": "What would you do differently if you saw a similar opportunity tomorrow?"
+          },
+          "status": "ok",
+          "latencyMs": 906,
+          "tokens": 946,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        },
+        {
+          "system": "C",
+          "detected": "oversized_position",
+          "feedback": {
+            "pattern": "oversized_position",
+            "message": "You just made an oversized position by buying 44 shares of TITAN, which is more than 30% of your account. This can expose you to large swings and limit diversification. Try sizing smaller or pausing before acting.",
+            "severity": "warning",
+            "question": "What would you do differently if you had to limit your position size?"
+          },
+          "status": "ok",
+          "latencyMs": 1155,
+          "tokens": 1386,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "overtrade-1",
+      "title": "Places a fifth order within 15 minutes",
+      "expected": "overtrading",
+      "truth": {
+        "symbol": "TITAN",
+        "price": 991.44,
+        "prevClose": 1085,
+        "dayChangePct": -8.62,
+        "move15Pct": -1.36,
+        "direction": "down",
+        "niftyDayChangePct": -7.98
+      },
+      "results": [
+        {
+          "system": "T",
+          "detected": "overtrading",
+          "feedback": {
+            "message": "This is order number 5 in the last 15 minutes. Many orders in a short time can mean reacting to every move instead of following a plan. Pause and write down a plan before the next order.",
+            "severity": "info",
+            "question": "Which of these orders were part of your plan for the day?"
+          },
+          "status": "ok",
+          "latencyMs": 0,
+          "tokens": 0,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        },
+        {
+          "system": "A",
+          "detected": "overtrading",
+          "feedback": {
+            "message": "You placed your fifth order in just 15 minutes, which is a sign of overtrading. This can lead to unnecessary costs and missed better opportunities. Try pausing a few minutes before each trade and write down why you want to trade.",
+            "severity": "caution",
+            "question": "What would you write down as your reason for this trade?"
+          },
+          "status": "ok",
+          "latencyMs": 547,
+          "tokens": 1020,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          },
+          "research": {
+            "status": "ok",
+            "tokens": 6008,
+            "latencyMs": 1986,
+            "summary": "Overtrading on TITAN"
+          }
+        },
+        {
+          "system": "B",
+          "detected": "overtrading",
+          "feedback": {
+            "message": "You placed five orders in 15 minutes, which is overtrading. This can waste capital and increase transaction costs. Try pausing for a few minutes before placing the next trade.",
+            "severity": "warning",
+            "question": "What would you write down before making your next trade to keep yourself focused?"
+          },
+          "status": "ok",
+          "latencyMs": 397,
+          "tokens": 752,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        },
+        {
+          "system": "C",
+          "detected": "overtrading",
+          "feedback": {
+            "pattern": "overtrading",
+            "message": "You just placed your fifth trade in 15 minutes, which is overtrading. This can lead to impulsive decisions and higher transaction costs. Try pausing before each trade and write down a clear reason for it.",
+            "severity": "caution",
+            "question": "What was the main reason you decided to buy TITAN at this moment?"
+          },
+          "status": "ok",
+          "latencyMs": 1153,
+          "tokens": 1652,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "overtrade-2",
+      "title": "Places a fifth order within 15 minutes",
+      "expected": "overtrading",
+      "truth": {
+        "symbol": "TITAN",
+        "price": 1002.67,
+        "prevClose": 1085,
+        "dayChangePct": -7.59,
+        "move15Pct": 0.21,
+        "direction": "down",
+        "niftyDayChangePct": -6.03
+      },
+      "results": [
+        {
+          "system": "T",
+          "detected": "overtrading",
+          "feedback": {
+            "message": "This is order number 5 in the last 15 minutes. Many orders in a short time can mean reacting to every move instead of following a plan. Pause and write down a plan before the next order.",
+            "severity": "info",
+            "question": "Which of these orders were part of your plan for the day?"
+          },
+          "status": "ok",
+          "latencyMs": 0,
+          "tokens": 0,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        },
+        {
+          "system": "A",
+          "detected": "overtrading",
+          "feedback": {
+            "message": "You placed 5 orders in 15 minutes, which is overtrading. This can quickly erode gains when the market is already down 7.59% and moving only 0.21% in the last 15 minutes. Try pausing for a minute before each trade to assess if it’s still needed.",
+            "severity": "caution",
+            "question": "How could a brief pause help you avoid overtrading?"
+          },
+          "status": "ok",
+          "latencyMs": 1655,
+          "tokens": 1220,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": false,
+              "hasQuestion": true
+            },
+            "passed": 6,
+            "total": 7,
+            "ungrounded": []
+          },
+          "research": {
+            "status": "ok",
+            "tokens": 6070,
+            "latencyMs": 1837,
+            "summary": "Overtrading on TITAN"
+          }
+        },
+        {
+          "system": "B",
+          "detected": "overtrading",
+          "feedback": {
+            "message": "You placed 5 orders in 15 minutes, which is overtrading. This can lead to unnecessary costs and reduce overall performance. Try pausing before acting or writing down a reason first.",
+            "severity": "caution",
+            "question": "What might you do differently next time to avoid overtrading?"
+          },
+          "status": "ok",
+          "latencyMs": 919,
+          "tokens": 988,
+          "score": {
+            "checks": {
+              "valid": true,
+              "grounded": true,
+              "noStopLoss": true,
+              "namesPattern": true,
+              "directionConsistent": true,
+              "actionable": true,
+              "hasQuestion": true
+            },
+            "passed": 7,
+            "total": 7,
+            "ungrounded": []
+          }
+        },
+        {
+          "system": "C",
+          "detected": null,
+          "feedback": null,
+          "status": "invalid_output",
+          "error": "attempt 1: These numbers are not in the facts you were given: 5.\nattempt 2: These numbers are not in the facts you were given: 5.",
+          "latencyMs": 2578,
+          "tokens": 3574,
+          "score": {
+            "checks": {
+              "valid": false,
+              "grounded": false,
+              "noStopLoss": false,
+              "namesPattern": false,
+              "directionConsistent": false,
+              "actionable": false,
+              "hasQuestion": false
+            },
+            "passed": 0,
+            "total": 7,
+            "ungrounded": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "benign-1",
+      "title": "A first, modest buy (8% of the account) at a quiet minute",
+      "expected": null,
+      "truth": {
+        "symbol": "TCS",
+        "price": 2067.04,
+        "prevClose": 2156.4,
+        "dayChangePct": -4.14,
+        "move15Pct": 0.11,
+        "direction": "down",
+        "niftyDayChangePct": -7.69
+      },
+      "results": [
+        {
+          "system": "T",
+          "detected": null,
+          "feedback": null,
+          "score": null,
+          "status": "quiet",
+          "latencyMs": 0,
+          "tokens": 0
+        },
+        {
+          "system": "A",
+          "detected": null,
+          "feedback": null,
+          "score": null,
+          "status": "quiet",
+          "latencyMs": 0,
+          "tokens": 0
+        },
+        {
+          "system": "B",
+          "detected": null,
+          "feedback": null,
+          "score": null,
+          "status": "quiet",
+          "latencyMs": 0,
+          "tokens": 0
+        },
+        {
+          "system": "C",
+          "detected": null,
+          "feedback": {
+            "pattern": "none",
+            "message": "You didn't trigger any of the patterns. Good job staying calm and not overtrading. Consider writing down your reasoning before each trade.",
+            "severity": "info",
+            "question": "What was your main reason for buying TCS at this time?"
+          },
+          "status": "ok",
+          "latencyMs": 759,
+          "tokens": 1118,
+          "score": null
+        }
+      ]
+    },
+    {
+      "id": "benign-2",
+      "title": "Sells INDIGO at a small profit",
+      "expected": null,
+      "truth": {
+        "symbol": "INDIGO",
+        "price": 1148.81,
+        "prevClose": 1247.5,
+        "dayChangePct": -7.91,
+        "move15Pct": -0.16,
+        "direction": "down",
+        "niftyDayChangePct": -6.05
+      },
+      "results": [
+        {
+          "system": "T",
+          "detected": null,
+          "feedback": null,
+          "score": null,
+          "status": "quiet",
+          "latencyMs": 0,
+          "tokens": 0
+        },
+        {
+          "system": "A",
+          "detected": null,
+          "feedback": null,
+          "score": null,
+          "status": "quiet",
+          "latencyMs": 0,
+          "tokens": 0
+        },
+        {
+          "system": "B",
+          "detected": null,
+          "feedback": null,
+          "score": null,
+          "status": "quiet",
+          "latencyMs": 0,
+          "tokens": 0
+        },
+        {
+          "system": "C",
+          "detected": null,
+          "feedback": {
+            "pattern": "none",
+            "message": "You didn't trigger any of the warning patterns. Good job staying calm. Consider pausing before each trade to confirm your reasoning.",
+            "severity": "info",
+            "question": "What was your main reason for selling at 10:51?"
+          },
+          "status": "ok",
+          "latencyMs": 940,
+          "tokens": 1340,
+          "score": null
+        }
+      ]
+    },
+    {
+      "id": "benign-3",
+      "title": "Adds a little to a INDIGO position that is in profit",
+      "expected": null,
+      "truth": {
+        "symbol": "INDIGO",
+        "price": 1152.21,
+        "prevClose": 1247.5,
+        "dayChangePct": -7.64,
+        "move15Pct": 0.24,
+        "direction": "down",
+        "niftyDayChangePct": -5.87
+      },
+      "results": [
+        {
+          "system": "T",
+          "detected": null,
+          "feedback": null,
+          "score": null,
+          "status": "quiet",
+          "latencyMs": 0,
+          "tokens": 0
+        },
+        {
+          "system": "A",
+          "detected": null,
+          "feedback": null,
+          "score": null,
+          "status": "quiet",
+          "latencyMs": 0,
+          "tokens": 0
+        },
+        {
+          "system": "B",
+          "detected": null,
+          "feedback": null,
+          "score": null,
+          "status": "quiet",
+          "latencyMs": 0,
+          "tokens": 0
+        },
+        {
+          "system": "C",
+          "detected": null,
+          "feedback": {
+            "pattern": "none",
+            "message": "You didn't trigger any of the patterns. Good job staying calm. Consider pausing before each trade to confirm your strategy.",
+            "severity": "info",
+            "question": "What was your main reason for buying the 3 shares of INDIGO at 10:55?"
+          },
+          "status": "ok",
+          "latencyMs": 943,
+          "tokens": 1487,
+          "score": null
+        }
+      ]
+    }
+  ]
+}

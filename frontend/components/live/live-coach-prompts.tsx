@@ -1,7 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLiveSession } from '@/lib/contexts/live-session-context'
+import type { ScenarioInfo } from '@/lib/engine/scenarios'
+import { usesHandBuiltIntro, marketReadPrompt, signalNoiseQuestion } from '@/lib/session/scenario-copy'
 import { useTracer } from '@/lib/behavior/tracer'
 import { Lightbulb, Play, X } from 'lucide-react'
 
@@ -71,8 +73,24 @@ const PROMPTS: Prompt[] = [
   },
 ]
 
+/**
+ * PROMPTS were written for COV-20 (NIFTY −3%, BRENT −12%, a RELIANCE downgrade).
+ * Other scenarios keep the same three pauses, with the market read and the
+ * downgrade question rewritten for their own indices and stocks.
+ */
+function promptsFor(s: ScenarioInfo): Prompt[] {
+  if (usesHandBuiltIntro(s)) return PROMPTS
+  const [open, news, ...rest] = PROMPTS
+  return [
+    { ...open, ...marketReadPrompt(s) },
+    { ...news, question: signalNoiseQuestion(s) },
+    ...rest,
+  ]
+}
+
 export function LiveCoachPrompts() {
-  const { state, dispatch } = useLiveSession()
+  const { state, dispatch, scenario } = useLiveSession()
+  const prompts = useMemo(() => promptsFor(scenario), [scenario])
   const { track } = useTracer()
   const [seenMinutes, setSeenMinutes] = useState<Set<number>>(new Set())
   const [activePrompt, setActivePrompt] = useState<Prompt | null>(null)
@@ -83,7 +101,7 @@ export function LiveCoachPrompts() {
     if (skipAll) return
     if (state.status !== 'LIVE' && state.status !== 'PAUSED') return
 
-    for (const p of PROMPTS) {
+    for (const p of prompts) {
       if (seenMinutes.has(p.triggerMinute)) continue
       if (state.currentMinute >= p.triggerMinute) {
         setSeenMinutes(s => {
@@ -97,7 +115,7 @@ export function LiveCoachPrompts() {
         break
       }
     }
-  }, [state.currentMinute, state.status, seenMinutes, skipAll, dispatch])
+  }, [state.currentMinute, state.status, seenMinutes, skipAll, dispatch, prompts])
 
   function dismiss() {
     setActivePrompt(null)

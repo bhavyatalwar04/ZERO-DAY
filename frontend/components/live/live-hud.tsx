@@ -1,20 +1,20 @@
 'use client'
 
 import { Pause, Play, ArrowLeft, BookOpen } from 'lucide-react'
-import { useLiveSession, fmtIST } from '@/lib/contexts/live-session-context'
+import { useLiveSession } from '@/lib/contexts/live-session-context'
 import { useEffect, useState } from 'react'
 
 interface LiveHudProps {
   onExit: () => void
 }
 
-const INDEX_KEYS = ['NIFTY', 'SENSEX', 'BANKNIFTY', 'USDINR', 'BRENT', 'GOLD', 'VIX']
 
 export function LiveHud({ onExit }: LiveHudProps) {
-  const { state, dispatch, totalEquity, dayPnL, dayPnLPct, positionsValue, getIndexLatest } = useLiveSession()
+  const { state, dispatch, totalEquity, dayPnL, dayPnLPct, positionsValue, getIndexLatest, scenario, market, clock, money } = useLiveSession()
+  const indexKeys = Object.keys(scenario.dataset.indices ?? {})
 
-  const sessionPct = Math.min(1, state.currentMinute / 375)
-  const minutesLeft = Math.max(0, 375 - state.currentMinute)
+  const sessionPct = Math.min(1, state.currentMinute / market.sessionMinutes)
+  const minutesLeft = Math.max(0, market.sessionMinutes - state.currentMinute)
   const hoursLeft = Math.floor(minutesLeft / 60)
   const minsLeft = minutesLeft % 60
 
@@ -79,14 +79,14 @@ export function LiveHud({ onExit }: LiveHudProps) {
             }}>
               {isClosed ? 'CLOSED' : isHalted ? 'HALTED' : isPaused ? 'PAUSED' : 'LIVE'}
               <span style={{ color: 'rgba(255,255,255,0.4)', margin: '0 6px' }}>·</span>
-              COV-20
+              {state.scenarioId}
             </span>
           </div>
           <div style={{
             fontFamily: 'var(--font-jetbrains), monospace',
             fontSize: '10px', color: '#808080', letterSpacing: '0.06em',
           }}>
-            9 March 2020 · {fmtIST(state.currentMinute)} IST
+            {scenario.dateLabel} · {clock(state.currentMinute)} {market.tz}
           </div>
         </div>
       </div>
@@ -104,7 +104,7 @@ export function LiveHud({ onExit }: LiveHudProps) {
         padding: '0 14px',
         overflow: 'hidden',
       }}>
-        {INDEX_KEYS.map(k => {
+        {indexKeys.map(k => {
           const ix = getIndexLatest(k)
           const up = ix.pctChange >= 0
           return (
@@ -120,7 +120,7 @@ export function LiveHud({ onExit }: LiveHudProps) {
                 {k === 'USDINR' ? `₹${ix.value.toFixed(2)}` :
                  k === 'BRENT' ? `$${ix.value.toFixed(2)}` :
                  k === 'GOLD' ? `₹${(ix.value/1000).toFixed(1)}K` :
-                 ix.value.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                 ix.value.toLocaleString(market.locale, { maximumFractionDigits: 2 })}
               </span>
               <span style={{
                 fontFamily: 'var(--font-jetbrains), monospace', fontSize: '11px',
@@ -215,12 +215,12 @@ export function LiveHud({ onExit }: LiveHudProps) {
         <div style={{
           fontFamily: 'var(--font-jetbrains), monospace',
           fontSize: '15px', fontWeight: 700, color: '#E0E0E0',
-        }}>₹{Math.round(state.cash).toLocaleString('en-IN')}</div>
+        }}>{money(state.cash)}</div>
         <div style={{
           fontFamily: 'var(--font-jetbrains), monospace', fontSize: '9px',
           color: '#808080', letterSpacing: '0.04em',
         }}>
-          + ₹{Math.round(positionsValue).toLocaleString('en-IN')} in stocks
+          + {money(positionsValue)} in stocks
         </div>
       </div>
 
@@ -242,7 +242,7 @@ export function LiveHud({ onExit }: LiveHudProps) {
           <span style={{
             fontFamily: 'var(--font-jetbrains), monospace',
             fontSize: '17px', fontWeight: 700, color: '#E0E0E0',
-          }}>₹{Math.round(totalEquity).toLocaleString('en-IN')}</span>
+          }}>{money(totalEquity)}</span>
         </div>
         <div style={{
           fontFamily: 'var(--font-jetbrains), monospace',
@@ -250,7 +250,7 @@ export function LiveHud({ onExit }: LiveHudProps) {
           color: dayPnL >= 0 ? '#00C853' : '#FF1F1F',
           letterSpacing: '0.04em',
         }}>
-          {dayPnL >= 0 ? '▲ +' : '▼ '}₹{Math.abs(Math.round(dayPnL)).toLocaleString('en-IN')} · {dayPnL >= 0 ? '+' : ''}{dayPnLPct.toFixed(2)}%
+          {dayPnL >= 0 ? '▲ +' : '▼ '}{money(Math.abs(dayPnL))} · {dayPnL >= 0 ? '+' : ''}{dayPnLPct.toFixed(2)}%
         </div>
       </div>
 
@@ -266,14 +266,14 @@ export function LiveHud({ onExit }: LiveHudProps) {
 }
 
 export function ClockReadout() {
-  const { state } = useLiveSession()
+  const { state, clock } = useLiveSession()
   const [_, force] = useState(0)
   // Force a tick on the visible second
   useEffect(() => {
     const i = setInterval(() => force(x => x + 1), 1000)
     return () => clearInterval(i)
   }, [])
-  return <span>{fmtIST(state.currentMinute)}</span>
+  return <span>{clock(state.currentMinute)}</span>
 }
 
 // unused-import noinspection

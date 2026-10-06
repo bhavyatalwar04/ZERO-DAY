@@ -4,6 +4,13 @@ import { useState, useMemo } from 'react'
 import { GraduationCap } from 'lucide-react'
 import type { ScenarioStock, OhlcvCandle } from '@/types/scenario'
 import { TechnicalsTutorial } from './technicals-tutorial'
+import { rsi as wilderRsi, adx as wilderAdx } from '@/lib/indicators/indicators'
+
+// P9 (2026-10-03, Claude at Bhavya's request): RSI and ADX come from the tested lib/indicators
+// (Wilder's definitions). With too little data they are NaN and shown as "—": the old code
+// showed RSI 50 or a random ADX (20 + Math.random() × 10), i.e. invented numbers.
+const num1 = (n: number) => (Number.isFinite(n) ? n.toFixed(1) : '—')
+const num0 = (n: number) => (Number.isFinite(n) ? n.toFixed(0) : '—')
 
 interface TabTechnicalsProps {
   stock: ScenarioStock
@@ -269,14 +276,14 @@ function MovingAverageCard({ ind, accent }: { ind: Indicators; accent: string })
 }
 
 function ADXCard({ ind }: { ind: Indicators }) {
-  const status = ind.adx > 40 ? 'STRONG' : ind.adx > 20 ? 'TRENDING' : 'RANGE'
+  const status = !Number.isFinite(ind.adx) ? 'N/A' : ind.adx > 40 ? 'STRONG' : ind.adx > 20 ? 'TRENDING' : 'RANGE'
   const statusColor = ind.adx > 40 ? '#5AB088' : ind.adx > 20 ? '#FFB830' : '#A89A7E'
   return (
     <Card title="ADX · Trend Strength" status={status} statusColor={statusColor} tutId="adx">
-      <BigNum value={ind.adx.toFixed(1)} color={statusColor} />
+      <BigNum value={num1(ind.adx)} color={statusColor} />
       <div style={{ position: 'relative', height: '6px', background: 'rgba(212,160,77,0.10)', borderRadius: '3px', overflow: 'hidden' }}>
         <div style={{
-          width: `${Math.min(100, ind.adx)}%`,
+          width: `${Number.isFinite(ind.adx) ? Math.min(100, ind.adx) : 0}%`,
           height: '100%',
           background: 'linear-gradient(90deg, #A89A7E, #FFB830, #5AB088)',
         }}/>
@@ -310,11 +317,11 @@ function PriceMACard({ candles, ind, accent }: { candles: OhlcvCandle[]; ind: In
 }
 
 function RSICard({ ind }: { ind: Indicators }) {
-  const status = ind.rsi > 70 ? 'OVERBOUGHT' : ind.rsi < 30 ? 'OVERSOLD' : 'NEUTRAL'
+  const status = !Number.isFinite(ind.rsi) ? 'N/A' : ind.rsi > 70 ? 'OVERBOUGHT' : ind.rsi < 30 ? 'OVERSOLD' : 'NEUTRAL'
   const statusColor = ind.rsi > 70 ? '#E04A4A' : ind.rsi < 30 ? '#5AB088' : '#A89A7E'
   return (
     <Card title="RSI · 14-day" status={status} statusColor={statusColor} tutId="rsi">
-      <BigNum value={ind.rsi.toFixed(1)} color={statusColor} />
+      <BigNum value={num1(ind.rsi)} color={statusColor} />
       <div style={{
         position: 'relative',
         height: '6px',
@@ -323,7 +330,8 @@ function RSICard({ ind }: { ind: Indicators }) {
       }}>
         <span style={{
           position: 'absolute',
-          left: `${ind.rsi}%`,
+          left: `${Number.isFinite(ind.rsi) ? ind.rsi : 50}%`,
+          display: Number.isFinite(ind.rsi) ? undefined : 'none',
           top: '-3px',
           width: '2px', height: '12px',
           background: '#F4EDE0',
@@ -750,7 +758,7 @@ function computeAll(candles: OhlcvCandle[], closes: number[], highs: number[], l
   const ma50Series = sma(closes, 50)
 
   // RSI
-  const rsi = computeRSI(closes, 14)
+  const rsi = wilderRsi(closes, 14) ?? NaN
 
   // MACD
   const ema12 = ema(closes, 12)
@@ -765,7 +773,7 @@ function computeAll(candles: OhlcvCandle[], closes: number[], highs: number[], l
   const williamsR = computeWilliamsR(highs, lows, closes, 14)
 
   // ADX
-  const adx = computeADX(highs, lows, closes, 14)
+  const adx = wilderAdx(candles, 14) ?? NaN
 
   // Bollinger
   const bollUpperSeries: number[] = []
@@ -834,21 +842,6 @@ function ema(arr: number[], n: number): number[] {
   for (let i = 1; i < arr.length; i++) out.push(arr[i] * k + out[i - 1] * (1 - k))
   return out
 }
-function computeRSI(closes: number[], period: number): number {
-  if (closes.length < period + 1) return 50
-  const gains: number[] = []
-  const losses: number[] = []
-  for (let i = 1; i < closes.length; i++) {
-    const diff = closes[i] - closes[i - 1]
-    gains.push(diff > 0 ? diff : 0)
-    losses.push(diff < 0 ? -diff : 0)
-  }
-  const avgG = gains.slice(-period).reduce((a, b) => a + b, 0) / period
-  const avgL = losses.slice(-period).reduce((a, b) => a + b, 0) / period
-  if (avgL === 0) return 100
-  const rs = avgG / avgL
-  return 100 - 100 / (1 + rs)
-}
 function computeStochastic(highs: number[], lows: number[], closes: number[], k: number, d: number): { k: number; d: number } {
   if (closes.length < k) return { k: 50, d: 50 }
   const hh = Math.max(...highs.slice(-k))
@@ -883,23 +876,6 @@ function computeATR(highs: number[], lows: number[], closes: number[], period: n
   }
   const sliceTR = tr.slice(-period)
   return sliceTR.reduce((a, b) => a + b, 0) / sliceTR.length
-}
-function computeADX(highs: number[], lows: number[], closes: number[], period: number): number {
-  if (closes.length < period * 2) return 20 + Math.random() * 10  // fallback
-  const dx: number[] = []
-  for (let i = 1; i < closes.length; i++) {
-    const upMove = highs[i] - highs[i - 1]
-    const downMove = lows[i - 1] - lows[i]
-    const plusDM = upMove > downMove && upMove > 0 ? upMove : 0
-    const minusDM = downMove > upMove && downMove > 0 ? downMove : 0
-    const tr = Math.max(highs[i] - lows[i], Math.abs(highs[i] - closes[i - 1]), Math.abs(lows[i] - closes[i - 1]))
-    if (tr === 0) { dx.push(0); continue }
-    const pdi = (plusDM / tr) * 100
-    const mdi = (minusDM / tr) * 100
-    dx.push(Math.abs(pdi - mdi) / Math.max(0.0001, pdi + mdi) * 100)
-  }
-  const lastN = dx.slice(-period)
-  return lastN.reduce((a, b) => a + b, 0) / Math.max(1, lastN.length)
 }
 function computeOBV(closes: number[], volumes: number[]): number {
   let obv = 0
@@ -967,9 +943,9 @@ function computeConfluence(ind: Indicators): Signal[] {
   out.push({ name: 'MA20',         reading: above20 ? 'Price above MA20' : 'Price below MA20', tilt: above20 ? 'bull' : 'bear' })
   const above50 = ind.lastClose > ind.ma50
   out.push({ name: 'MA50',         reading: above50 ? 'Price above MA50' : 'Price below MA50', tilt: above50 ? 'bull' : 'bear' })
-  out.push({ name: 'ADX',          reading: ind.adx > 25 ? `Strong trend (${ind.adx.toFixed(0)})` : `Weak (${ind.adx.toFixed(0)})`, tilt: ind.adx > 25 ? (above20 ? 'bull' : 'bear') : 'neutral' })
+  out.push({ name: 'ADX',          reading: !Number.isFinite(ind.adx) ? 'Not enough data' : ind.adx > 25 ? `Strong trend (${num0(ind.adx)})` : `Weak (${num0(ind.adx)})`, tilt: ind.adx > 25 ? (above20 ? 'bull' : 'bear') : 'neutral' })
   // Momentum
-  out.push({ name: 'RSI',          reading: ind.rsi > 70 ? `Overbought (${ind.rsi.toFixed(0)})` : ind.rsi < 30 ? `Oversold (${ind.rsi.toFixed(0)})` : `Neutral (${ind.rsi.toFixed(0)})`, tilt: ind.rsi > 70 ? 'bear' : ind.rsi < 30 ? 'bull' : 'neutral' })
+  out.push({ name: 'RSI',          reading: !Number.isFinite(ind.rsi) ? 'Not enough data' : ind.rsi > 70 ? `Overbought (${num0(ind.rsi)})` : ind.rsi < 30 ? `Oversold (${num0(ind.rsi)})` : `Neutral (${num0(ind.rsi)})`, tilt: ind.rsi > 70 ? 'bear' : ind.rsi < 30 ? 'bull' : 'neutral' })
   out.push({ name: 'Stochastic',   reading: ind.stochK > 80 ? `Overbought (${ind.stochK.toFixed(0)})` : ind.stochK < 20 ? `Oversold (${ind.stochK.toFixed(0)})` : `Neutral (${ind.stochK.toFixed(0)})`, tilt: ind.stochK > 80 ? 'bear' : ind.stochK < 20 ? 'bull' : 'neutral' })
   out.push({ name: 'Williams %R',  reading: ind.williamsR > -20 ? 'Overbought' : ind.williamsR < -80 ? 'Oversold' : 'Neutral', tilt: ind.williamsR > -20 ? 'bear' : ind.williamsR < -80 ? 'bull' : 'neutral' })
   out.push({ name: 'MACD',         reading: ind.macdHist >= 0 ? 'Bull crossover' : 'Bear crossover', tilt: ind.macdHist >= 0 ? 'bull' : 'bear' })

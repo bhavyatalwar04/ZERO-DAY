@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
-import { BookOpen, Library, Activity, BarChart3, Home } from 'lucide-react'
+import { BookOpen, Library, Activity, BarChart3, Home, TrendingUp } from 'lucide-react'
 
 interface NavItem {
   label: string
@@ -14,8 +14,9 @@ const NAV: NavItem[] = [
   { label: 'Home',     href: '/',                       icon: Home,      match: p => p === '/' },
   { label: 'Academy',  href: '/academy',                icon: BookOpen,  match: p => p.startsWith('/academy') },
   { label: 'Ledger',   href: '/ledger',                 icon: Library,   match: p => p.startsWith('/ledger') },
-  { label: 'Live Sim', href: '/sim/COV-20/live',        icon: Activity,  match: p => p.includes('/live') },
+  { label: 'Scenarios', href: '/scenarios',             icon: Activity,  match: p => p.startsWith('/scenarios') || p.includes('/live') },
   { label: 'Debrief',  href: '/sim/COV-20/debrief',     icon: BarChart3, match: p => p.includes('/debrief') },
+  { label: 'Progress', href: '/progress',               icon: TrendingUp, match: p => p.startsWith('/progress') },
 ]
 
 interface Props {

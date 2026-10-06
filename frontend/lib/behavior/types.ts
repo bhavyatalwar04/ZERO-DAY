@@ -169,6 +169,8 @@ export interface ArchetypeCard {
 // ─── Debrief contract (LLM I/O) ─────────────────────────────
 
 export interface DebriefRequest {
+  /** which scenario was played (route segment); unknown or missing → COV-20 */
+  scenarioId?: string
   archetype: ArchetypeCard
   profile: BehaviorProfile
   mistakes: Mistake[]

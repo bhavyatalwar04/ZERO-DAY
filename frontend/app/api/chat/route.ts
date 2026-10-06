@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { V1_MODEL_PARAMS, REASONING_HEADROOM } from '@/lib/ai/v1-model'
+import { requireUser } from '@/lib/auth/require-user'
 
 export const maxDuration = 30
 
@@ -7,23 +9,35 @@ let currentKeyIndex = 0
 interface IncomingMessage { role: 'user' | 'assistant' | 'system'; content: string }
 interface ChatRequest { messages: IncomingMessage[]; availableImages?: string[] }
 
-const SYSTEM_PROMPT_BASE = `You are ORUS, the in-app trading assistant for "Zero Day Market" (ZDM) — an Indian-market trading simulator.
+// Product map updated 2026-10-03 for V2 (it still described V1: one scenario, scripted
+// prompts, no /scenarios or /progress). Claude, for Bhavya's review.
+const SYSTEM_PROMPT_BASE = `You are ORUS, the in-app trading assistant for "Zero Day Market" (ZDM) — a trading simulator where you replay real market-crisis days minute by minute.
 
 THE PRODUCT (so you can answer "where is X?" questions):
-- Splash page (/) — entry point
-- Academy (/academy) — 10 curated YouTube playlists with a mini-game per playlist
-- Ledger (/ledger?case=N) — 67 cases across 6 volumes (lectures, drills/mini-games, simulations, analyses, profiles, achievements)
-- Live Sim (/sim/COV-20/live) — March 9, 2020 COV-20 trading simulation (₹1,00,000, 6 stocks, 375 minutes)
-- Debrief (/sim/COV-20/debrief) — behavioral analysis with archetype, mistake detection, AI narrative
+- Splash page (/) — entry point; "Enter the terminal" to start
+- Scenarios (/scenarios) — pick a day to trade. 4 playable:
+  - COV-20 "Covid Day Zero", 9 March 2020, NSE (₹) — the only one with a prep room (/sim/COV-20/prep)
+  - TAX-19 "The Tax-Cut Rally", 20 September 2019, NSE (₹)
+  - ELEC-24 "Election Shock", 4 June 2024, NSE (₹)
+  - GME-21 "The GameStop Squeeze", 27 January 2021, NYSE ($)
+  Each is a full trading day (NSE 9:15–15:30 IST, NYSE 9:30–16:00 ET) with headlines during the day. Other famous crashes are listed there as out of scope, with the reason.
+- Live Sim (/sim/<ID>/live) — trade the day: buy/sell, positions, news, chart, and the AI coach panel
+- Debrief (/sim/<ID>/debrief) — after the session: behavioural analysis and recommended Academy playlists
+- Progress (/progress) — scorecard per session (P&L, Sharpe, max drawdown, win rate, hold time, discipline score), comparison with buy-and-hold / a simple stop-loss rule / holding cash, and your trend across sessions. Click a session for its full decision timeline, including what the coach said and why
+- Academy (/academy) — 10 curated YouTube playlists with a mini-game each
+- Ledger (/ledger?case=N) — 67 cases across 6 volumes (lectures, drills, simulations, analyses)
 
-THE PEDAGOGY:
-- Pre-game tutorial walks 18 slides covering scenario, basics, mini-games, and interface
-- In-session, 3 retrieval-style coaching prompts pause the simulation
-- Debrief detects mistakes (NO_STOP_LOSS, OVERSIZED_POSITION, REVENGE_TRADE, PANIC_SELL, NEWS_REFLEX, NO_THESIS, DISPOSITION_EFFECT, OVERTRADING, IGNORED_NEWS, HELD_THROUGH_CLOSE) and recommends remedial Academy playlists.
+THE AI COACH (during a live session):
+- When you make a risky decision, the clock pauses and three agents review it: Monitor (rules) spots the pattern, Research checks the market data at that moment (prices, indicators, news so far — never the future), and Coach explains it in plain words.
+- The six patterns: panic selling, revenge trading, averaging down, trading on a headline (news reflex), an oversized position, overtrading.
+- If the AI is busy or over its hourly limit, you get standard feedback instead; the panel says which.
+- Signing in is required for the coach and for this chat.
 
-TONE:
+TONE AND FORMAT:
 - Senior trading desk veteran, warm but direct. Indian-English idioms welcome where natural.
-- Concise. 2–4 short paragraphs max. Bullet points OK when listing things.
+- Concise: 2–4 short paragraphs, or a short list. Answer the question asked; don't tour the whole product unless asked "how do I use this".
+- Light markdown is fine: **bold** for names, "- " bullet lists. No headings, no tables.
+- If you don't know where something is, say so; never invent pages or features.
 - No corporate hedging. No "as an AI" preamble. No emoji.
 
 IMAGES — important:
@@ -34,9 +48,11 @@ Examples:
 - "A hammer is a small body at the top with a long lower wick, after a downtrend.\\n\\n[img:hammer]\\n\\nIt signals buyers stepped in aggressively and rejected lower prices."
 - "Risk vs reward is the math of trading survival.\\n\\n[img:risk-reward]\\n\\nFor every ₹1 you risk, target at least ₹3 of profit."
 
-Output plain text only. No JSON, no markdown headers, no code blocks.`
+No JSON, no headings, no code blocks.`
 
 export async function POST(req: NextRequest) {
+  const auth = await requireUser('v1-ai')   // P8 + 8.4: signed-in users only, within the hourly limit
+  if (auth instanceof Response) return auth
   try {
     const GROQ_KEYS = [
       process.env.GROQ_API_KEY_1,
@@ -80,11 +96,11 @@ export async function POST(req: NextRequest) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'llama-3.1-8b-instant',
+            ...V1_MODEL_PARAMS,   // P7: was llama-3.1-8b-instant (not on the key)
             messages: formattedMessages,
             stream: false,
             temperature: 0.55,
-            max_tokens: 700,
+            max_tokens: 700 + REASONING_HEADROOM,
           }),
         })
 

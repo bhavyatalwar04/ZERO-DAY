@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Anton, Bebas_Neue, JetBrains_Mono, Inter, Pirata_One, Cinzel, Cormorant_SC, EB_Garamond, IBM_Plex_Mono, Bodoni_Moda, Special_Elite, Fraunces } from "next/font/google";
+import localFont from "next/font/local";
 import { NavigationProvider } from '@/lib/contexts/navigation-context'
 import { UserProvider } from '@/lib/contexts/user-context'
 import { ToastProvider } from '@/lib/contexts/toast-context'
@@ -8,99 +8,99 @@ import { TracerProvider } from '@/lib/behavior/tracer'
 import { HelpChatWidget } from '@/components/help-chat/chat-widget'
 import "./globals.css";
 
-const geistSans = Geist({
+// Fonts are self-hosted from Fontsource packages (the same Google Fonts files, latin
+// subset), so the build never fetches fonts.googleapis.com. next/font/google made
+// Turbopack builds fail at random when Google returned extensionless `…&skey=…` URLs
+// (vercel/next.js#99114; roadmap 8.1, 2026-10-02). Variable fonts declare their weight range.
+// Removed as unused: Pirata One, Bodoni Moda, Special Elite.
+
+const geistSans = localFont({
+  src: '../node_modules/@fontsource-variable/geist/files/geist-latin-wght-normal.woff2',
+  weight: '100 900',
   variable: "--font-geist-sans",
-  subsets: ["latin"],
   display: "swap",
 });
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
+  src: '../node_modules/@fontsource-variable/geist-mono/files/geist-mono-latin-wght-normal.woff2',
+  weight: '100 900',
   variable: "--font-geist-mono",
-  subsets: ["latin"],
   display: "swap",
 });
 
-const anton = Anton({
-  weight: "400",
+const anton = localFont({
+  src: [
+    { path: '../node_modules/@fontsource/anton/files/anton-latin-400-normal.woff2', weight: '400', style: 'normal' },
+  ],
   variable: "--font-anton",
-  subsets: ["latin"],
   display: "swap",
 });
 
-const bebasNeue = Bebas_Neue({
-  weight: "400",
+const bebasNeue = localFont({
+  src: [
+    { path: '../node_modules/@fontsource/bebas-neue/files/bebas-neue-latin-400-normal.woff2', weight: '400', style: 'normal' },
+  ],
   variable: "--font-bebas",
-  subsets: ["latin"],
   display: "swap",
 });
 
-const jetbrainsMono = JetBrains_Mono({
+const jetbrainsMono = localFont({
+  src: '../node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2',
+  weight: '100 800',
   variable: "--font-jetbrains",
-  subsets: ["latin"],
   display: "swap",
 });
 
-const inter = Inter({
+const inter = localFont({
+  src: '../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2',
+  weight: '100 900',
   variable: "--font-inter",
-  subsets: ["latin"],
   display: "swap",
 });
 
-const pirataOne = Pirata_One({
-  weight: "400",
-  variable: "--font-pirata",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const cinzel = Cinzel({
-  weight: ["400", "700"],
+const cinzel = localFont({
+  src: '../node_modules/@fontsource-variable/cinzel/files/cinzel-latin-wght-normal.woff2',
+  weight: '400 900',
   variable: "--font-cinzel",
-  subsets: ["latin"],
   display: "swap",
 });
 
-const cormorantSC = Cormorant_SC({
-  weight: ["400", "600", "700"],
+const cormorantSC = localFont({
+  src: [
+    { path: '../node_modules/@fontsource/cormorant-sc/files/cormorant-sc-latin-400-normal.woff2', weight: '400', style: 'normal' },
+    { path: '../node_modules/@fontsource/cormorant-sc/files/cormorant-sc-latin-600-normal.woff2', weight: '600', style: 'normal' },
+    { path: '../node_modules/@fontsource/cormorant-sc/files/cormorant-sc-latin-700-normal.woff2', weight: '700', style: 'normal' },
+  ],
   variable: "--font-cormorant-sc",
-  subsets: ["latin"],
   display: "swap",
 });
 
-const ebGaramond = EB_Garamond({
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
+const ebGaramond = localFont({
+  src: [
+    { path: '../node_modules/@fontsource-variable/eb-garamond/files/eb-garamond-latin-wght-normal.woff2', weight: '400 800', style: 'normal' },
+    { path: '../node_modules/@fontsource-variable/eb-garamond/files/eb-garamond-latin-wght-italic.woff2', weight: '400 800', style: 'italic' },
+  ],
   variable: "--font-eb-garamond",
-  subsets: ["latin"],
   display: "swap",
 });
 
-const plexMono = IBM_Plex_Mono({
-  weight: ["400", "500", "600", "700"],
+const plexMono = localFont({
+  src: [
+    { path: '../node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff2', weight: '400', style: 'normal' },
+    { path: '../node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-500-normal.woff2', weight: '500', style: 'normal' },
+    { path: '../node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-600-normal.woff2', weight: '600', style: 'normal' },
+    { path: '../node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-700-normal.woff2', weight: '700', style: 'normal' },
+  ],
   variable: "--font-plex-mono",
-  subsets: ["latin"],
   display: "swap",
 });
 
-const bodoni = Bodoni_Moda({
-  weight: ["400", "500", "700"],
-  variable: "--font-bodoni",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const specialElite = Special_Elite({
-  weight: "400",
-  variable: "--font-special-elite",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const fraunces = Fraunces({
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
-  style: ["normal", "italic"],
+const fraunces = localFont({
+  src: [
+    { path: '../node_modules/@fontsource-variable/fraunces/files/fraunces-latin-wght-normal.woff2', weight: '100 900', style: 'normal' },
+    { path: '../node_modules/@fontsource-variable/fraunces/files/fraunces-latin-wght-italic.woff2', weight: '100 900', style: 'italic' },
+  ],
   variable: "--font-fraunces",
-  subsets: ["latin"],
   display: "swap",
 });
 
@@ -117,7 +117,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${anton.variable} ${bebasNeue.variable} ${jetbrainsMono.variable} ${inter.variable} ${pirataOne.variable} ${cinzel.variable} ${cormorantSC.variable} ${ebGaramond.variable} ${plexMono.variable} ${bodoni.variable} ${specialElite.variable} ${fraunces.variable} font-sans antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${anton.variable} ${bebasNeue.variable} ${jetbrainsMono.variable} ${inter.variable} ${cinzel.variable} ${cormorantSC.variable} ${ebGaramond.variable} ${plexMono.variable} ${fraunces.variable} font-sans antialiased`}
       >
         <TracerProvider>
           <UserProvider>

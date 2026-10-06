@@ -1,0 +1,101 @@
+# Live run of the real Research agent (2.3/2.4), 2026-10-02
+# Real Monitor events (revenge_trade@28, news_reflex@60) from a scripted COV-20 session; production RESEARCH_LIMITS.
+# Groq key limits read from response headers: 8,000 tokens/minute per model, 1,000 requests/day (1 key configured).
+
+## Run 1 (19:32): maxSteps 5, maxRunTokens 8000, free-text symbol; second model run started right after the first
+stdout | lib/agents/research/research-agent.live.test.ts > LIVE Research agent > the scripted session produced Monitor events
+events: revenge_trade@28, news_reflex@60
+ ✓ lib/agents/research/research-agent.live.test.ts > LIVE Research agent > the scripted session produced Monitor events 2ms
+stdout | lib/agents/research/research-agent.live.test.ts > LIVE Research agent > openai/gpt-oss-20b: runs on every event without throwing
+══ openai/gpt-oss-20b · revenge_trade@28 → error (2307 ms, 0+0 tokens)
+  ERROR: tool_use_failed: Groq 400: {"error":{"message":"Tool choice is required, but model did not call a tool","type":"invalid_request_error","code":"tool_use_failed","failed_generation":""}}
+stdout | lib/agents/research/research-agent.live.test.ts > LIVE Research agent > openai/gpt-oss-20b: runs on every event without throwing
+══ openai/gpt-oss-20b · news_reflex@60 → error (2903 ms, 5101+696 tokens)
+  ERROR: rate_limited: All 1 Groq keys returned 429
+  model: get_price_window({"lookbackMinutes":5,"symbol":"RELIANCE"})
+  tool get_price_window: {"symbol":"RELIANCE","from":"10:10","to":"10:15","startPrice":1221.84,"price":1226.79,"changePct":0.41,"high":1226.79,"low":1217.79,"prevClo
+  model: get_indicators({"symbol":"RELIANCE"})
+  tool get_indicators: {"symbol":"RELIANCE","at":"10:15","price":1226.79,"barsAvailable":13,"rsi14":null,"sma20min":1219.28,"sma60min":1228.31,"priceVsSma60minPct"
+  model: get_market({"lookbackMinutes":5})
+  tool get_market: {"at":"10:15","indices":[{"name":"NIFTY","value":10207.9,"vsPrevClosePct":-7.11,"changeOverWindowPct":0.15},{"name":"SENSEX","value":35030.2
+  model: get_position({"symbol":"RELIANCE"})
+  tool get_position: {"symbol":"RELIANCE","qty":0,"avgPrice":null,"price":1226.79,"unrealisedPnL":null,"unrealisedPct":null,"openOrders":[],"cash":70866,"realise
+ ✓ lib/agents/research/research-agent.live.test.ts > LIVE Research agent > openai/gpt-oss-20b: runs on every event without throwing 5215ms
+stdout | lib/agents/research/research-agent.live.test.ts > LIVE Research agent > qwen/qwen3.8-27b: runs on every event without throwing
+══ qwen/qwen3.8-27b · revenge_trade@28 → error (1164 ms, 5757+154 tokens)
+  ERROR: rate_limited: All 1 Groq keys returned 429
+  model: get_market({"lookbackMinutes":30}), get_price_window({"lookbackMinutes":30,"symbol":"TCS"}), get_news({"lookbackMinutes":60})
+  tool get_market: {"at":"09:43","indices":[{"name":"NIFTY","value":10425.79,"vsPrevClosePct":-5.13,"changeOverWindowPct":-5.18},{"name":"SENSEX","value":35762
+  tool get_price_window: {"symbol":"TCS","from":"09:15","to":"09:43","startPrice":2097.66,"price":2078.18,"changePct":-0.93,"high":2103.07,"low":2073.02,"prevClose":
+  tool get_news: {"headlines":[{"time":"09:32","minutesAgo":11,"headline":"Italy extends lockdown to entire country — 60M residents under restriction","sourc
+  model: get_position({"symbol":"TRO"})
+  tool get_position: ERROR tool_threw: Tool "get_position" failed: Unknown symbol "TRO". Use one of: INDIGO, SUNPHARMA, RELIANCE, HDFCBANK, TITAN, TCS
+  model: get_position({"symbol":"TRO"})
+  tool get_position: ERROR tool_threw: Tool "get_position" failed: Unknown symbol "TRO". Use one of: INDIGO, SUNPHARMA, RELIANCE, HDFCBANK, TITAN, TCS
+stdout | lib/agents/research/research-agent.live.test.ts > LIVE Research agent > qwen/qwen3.8-27b: runs on every event without throwing
+══ qwen/qwen3.8-27b · news_reflex@60 → error (60 ms, 0+0 tokens)
+  ERROR: rate_limited: All 1 Groq keys returned 429
+ ✓ lib/agents/research/research-agent.live.test.ts > LIVE Research agent > qwen/qwen3.8-27b: runs on every event without throwing 1226ms
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  19:32:42
+   Duration  7.31s (transform 199ms, setup 0ms, import 512ms, tests 6.45s, environment 0ms)
+
+## Run 2 (19:35): maxSteps 4, maxRunTokens 5000, symbol enum, 65 s between runs per model
+stdout | lib/agents/research/research-agent.live.test.ts > LIVE Research agent > the scripted session produced Monitor events
+events: revenge_trade@28, news_reflex@60
+ ✓ lib/agents/research/research-agent.live.test.ts > LIVE Research agent > the scripted session produced Monitor events 3ms
+stdout | lib/agents/research/research-agent.live.test.ts > LIVE Research agent > openai/gpt-oss-20b: runs on every event without throwing
+══ openai/gpt-oss-20b · revenge_trade@28 → step_limit (3690 ms, 3507+521 tokens)
+  model: get_price_window({"lookbackMinutes":5,"symbol":"TCS"})
+  tool get_price_window: {"symbol":"TCS","from":"09:38","to":"09:43","startPrice":2075.17,"price":2078.18,"changePct":0.15,"high":2090.51,"low":2073.02,"prevClose":2
+  model: get_position({"symbol":"TCS"})
+  tool get_position: {"symbol":"TCS","qty":0,"avgPrice":null,"price":2078.18,"unrealisedPnL":null,"unrealisedPct":null,"openOrders":[],"cash":99960.52,"realisedP
+  model: get_market({"lookbackMinutes":5})
+  tool get_market: {"at":"09:43","indices":[{"name":"NIFTY","value":10425.79,"vsPrevClosePct":-5.13,"changeOverWindowPct":-0.87},{"name":"SENSEX","value":35762
+stdout | lib/agents/research/research-agent.live.test.ts > LIVE Research agent > openai/gpt-oss-20b: runs on every event without throwing
+══ openai/gpt-oss-20b · news_reflex@60 → step_limit (4137 ms, 3725+702 tokens)
+  model: get_price_window({"lookbackMinutes":5,"symbol":"RELIANCE"})
+  tool get_price_window: {"symbol":"RELIANCE","from":"10:10","to":"10:15","startPrice":1221.84,"price":1226.79,"changePct":0.41,"high":1226.79,"low":1217.79,"prevClo
+  model: get_market({"lookbackMinutes":5})
+  tool get_market: {"at":"10:15","indices":[{"name":"NIFTY","value":10207.9,"vsPrevClosePct":-7.11,"changeOverWindowPct":0.15},{"name":"SENSEX","value":35030.2
+  model: get_indicators({"symbol":"RELIANCE"})
+  tool get_indicators: {"symbol":"RELIANCE","at":"10:15","price":1226.79,"barsAvailable":13,"rsi14":null,"sma20min":1219.28,"sma60min":1228.31,"priceVsSma60minPct"
+ ✓ lib/agents/research/research-agent.live.test.ts > LIVE Research agent > openai/gpt-oss-20b: runs on every event without throwing 72836ms
+stdout | lib/agents/research/research-agent.live.test.ts > LIVE Research agent > qwen/qwen3.8-27b: runs on every event without throwing
+══ qwen/qwen3.8-27b · revenge_trade@28 → error (1362 ms, 5874+155 tokens)
+  ERROR: rate_limited: All 1 Groq keys returned 429
+  model: get_market({"lookbackMinutes":30}), get_price_window({"lookbackMinutes":30,"symbol":"TCS"}), get_news({"lookbackMinutes":60})
+  tool get_market: {"at":"09:43","indices":[{"name":"NIFTY","value":10425.79,"vsPrevClosePct":-5.13,"changeOverWindowPct":-5.18},{"name":"SENSEX","value":35762
+  tool get_price_window: {"symbol":"TCS","from":"09:15","to":"09:43","startPrice":2097.66,"price":2078.18,"changePct":-0.93,"high":2103.07,"low":2073.02,"prevClose":
+  tool get_news: {"headlines":[{"time":"09:32","minutesAgo":11,"headline":"Italy extends lockdown to entire country — 60M residents under restriction","sourc
+  model: get_position({"symbol":"TCS"})
+  tool get_position: {"symbol":"TCS","qty":0,"avgPrice":null,"price":2078.18,"unrealisedPnL":null,"unrealisedPct":null,"openOrders":[],"cash":99960.52,"realisedP
+  model: get_position({"symbol":"INDIGO"})
+  tool get_position: {"symbol":"INDIGO","qty":0,"avgPrice":null,"price":1150.88,"unrealisedPnL":null,"unrealisedPct":null,"openOrders":[],"cash":99960.52,"realis
+stdout | lib/agents/research/research-agent.live.test.ts > LIVE Research agent > qwen/qwen3.8-27b: runs on every event without throwing
+══ qwen/qwen3.8-27b · news_reflex@60 → ok (2043 ms, 6075+395 tokens)
+  model: get_news({"lookbackMinutes":60}), get_market({"lookbackMinutes":60}), get_price_window({"lookbackMinutes":60,"symbol":"RELIANCE"})
+  tool get_news: {"headlines":[{"time":"10:14","minutesAgo":1,"headline":"IndiGo management memo: route review \"under consideration\" (yesterday's news)","s
+  tool get_market: {"at":"10:15","indices":[{"name":"NIFTY","value":10207.9,"vsPrevClosePct":-7.11,"changeOverWindowPct":-7.16},{"name":"SENSEX","value":35030.
+  tool get_price_window: {"symbol":"RELIANCE","from":"09:15","to":"10:15","startPrice":1264.22,"price":1226.79,"changePct":-2.96,"high":1267.35,"low":1206.4,"prevClo
+  model: get_position({"symbol":"RELIANCE"})
+  tool get_position: {"symbol":"RELIANCE","qty":0,"avgPrice":null,"price":1226.79,"unrealisedPnL":null,"unrealisedPct":null,"openOrders":[],"cash":70866,"realise
+  model: submit_findings({"evidence":[{"fact":"NIFTY at 10207.9, -7.11% vs prev close, -7.16% over the last 60 minutes; no halts","tool":"get_market"},{"fact":"RELIANCE at 1226.79, -9.54% vs prev close (1356.1), -2.96% over the last 60 minutes, low 1206.4","tool":"get_price_window"},{"fact":"Headline at 10:14 (1 min ago): IndiGo management memo: route review 'under consideration' (yesterday's news), severity low","tool":"get_news"},{"fact":"RELIANCE position: qty 0, no open orders, cash 70866, realised P\u0026L today -39.48","tool":"get_position"}],"summary":"IndiGo management memo: route review 'under consideration' (yesterday's news)"})
+  submit: accepted
+  SUMMARY: IndiGo management memo: route review 'under consideration' (yesterday's news)
+   - [get_market] NIFTY at 10207.9, -7.11% vs prev close, -7.16% over the last 60 minutes; no halts
+   - [get_price_window] RELIANCE at 1226.79, -9.54% vs prev close (1356.1), -2.96% over the last 60 minutes, low 1206.4
+   - [get_news] Headline at 10:14 (1 min ago): IndiGo management memo: route review 'under consideration' (yesterday's news), severity low
+   - [get_position] RELIANCE position: qty 0, no open orders, cash 70866, realised P&L today -39.48
+ ✓ lib/agents/research/research-agent.live.test.ts > LIVE Research agent > qwen/qwen3.8-27b: runs on every event without throwing 68416ms
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  19:35:39
+   Duration  142.12s (transform 223ms, setup 0ms, import 532ms, tests 141.26s, environment 0ms)
+
+## Coach (2.5), 2026-10-02: openai/gpt-oss-20b, strict json_schema + content check
+══ coach gpt-oss-20b · with research → ok (995 ms, 686+341 tokens, 1 call(s))
+  OUTPUT: {"message":"You reacted to a headline that didn't mention RELIANCE. This news reflex can lead to buying when the stock is already down. Try pausing a few minutes or writing down your reason before acting.","severity":"caution","question":"What would you do differently if you saw a headline unrelated to the stock?"}
+══ coach gpt-oss-20b · monitor only → ok (788 ms, 574+348 tokens, 1 call(s))
+  OUTPUT: {"message":"You reacted to a headline that was actually noise and placed a BUY order just 1 minute later. This reflex can lead to buying on irrelevant news. Try pausing a few minutes or writing down why you think the news matters before acting.","severity":"caution","question":"What would you write down to justify buying after a news headline?"}

@@ -9,12 +9,15 @@ import { computeProfile } from '@/lib/behavior/profile'
 import { detectMistakes } from '@/lib/behavior/mistakes'
 import { classifyArchetype } from '@/lib/behavior/archetype'
 import type { ArchetypeCard, BehaviorProfile, DebriefResponse, Mistake, TraceEvent } from '@/lib/behavior/types'
+import { SCENARIOS, DEFAULT_SCENARIO } from '@/lib/engine/scenarios'
+import { formatMoney, signedMoney, type MarketSpec } from '@/lib/engine/markets'
 
 type LoadState = 'loading' | 'no-data' | 'computing' | 'streaming' | 'ready' | 'fallback'
 
 export default function DebriefPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id: _id } = use(params)
+  const { id } = use(params)
   const router = useRouter()
+  const { market } = SCENARIOS[id] ?? SCENARIOS[DEFAULT_SCENARIO]
   const [loadState, setLoadState] = useState<LoadState>('loading')
   const [profile, setProfile] = useState<BehaviorProfile | null>(null)
   const [mistakes, setMistakes] = useState<Mistake[]>([])
@@ -41,7 +44,7 @@ export default function DebriefPage({ params }: { params: Promise<{ id: string }
     fetch('/api/debrief', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ archetype: a, profile: p, mistakes: m, keyEvents }),
+      body: JSON.stringify({ scenarioId: id, archetype: a, profile: p, mistakes: m, keyEvents }),
     })
       .then(r => r.json())
       .then(json => {
@@ -53,7 +56,7 @@ export default function DebriefPage({ params }: { params: Promise<{ id: string }
         }
       })
       .catch(() => setLoadState('fallback'))
-  }, [])
+  }, [id])
 
   if (loadState === 'loading') return <FullScreenMessage title="Loading session…"/>
   if (loadState === 'no-data') {
@@ -61,7 +64,7 @@ export default function DebriefPage({ params }: { params: Promise<{ id: string }
       <FullScreenMessage
         title="No session data found"
         body="Start and complete a live session first. Your trade trace is captured automatically."
-        action={{ label: 'Go to Live Room', onClick: () => router.push(`/sim/COV-20/live`) }}
+        action={{ label: 'Go to Live Room', onClick: () => router.push(`/sim/${id}/live`) }}
       />
     )
   }
@@ -88,9 +91,9 @@ export default function DebriefPage({ params }: { params: Promise<{ id: string }
             fontFamily: 'var(--font-fraunces), serif',
             fontSize: '32px', fontWeight: 700, color: '#F0F0F0',
             letterSpacing: '-0.01em', lineHeight: 1.1,
-          }}>Debrief · <span style={{ fontStyle: 'italic', color: '#D4A04D' }}>COV-20</span></div>
+          }}>Debrief · <span style={{ fontStyle: 'italic', color: '#D4A04D' }}>{id}</span></div>
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button onClick={() => router.push(`/sim/COV-20/live`)} style={topBtn}>
+            <button onClick={() => router.push(`/sim/${id}/live`)} style={topBtn}>
               <ArrowLeft size={12}/> New Session
             </button>
             <button onClick={() => location.reload()} style={topBtn}>
@@ -100,16 +103,16 @@ export default function DebriefPage({ params }: { params: Promise<{ id: string }
         </div>
 
         {/* PANEL 1 — Headline */}
-        <HeadlinePanel profile={profile} archetype={archetype}/>
+        <HeadlinePanel profile={profile} archetype={archetype} market={market}/>
 
         {/* PANEL 2 — Story */}
-        <StoryPanel debrief={debrief} loadState={loadState} profile={profile}/>
+        <StoryPanel debrief={debrief} loadState={loadState} profile={profile} market={market}/>
 
         {/* PANEL 3 — Signature stats */}
         <StatsPanel profile={profile}/>
 
         {/* PANEL · Per-Trade Breakdown */}
-        <TradeBreakdownPanel debrief={debrief} loadState={loadState}/>
+        <TradeBreakdownPanel debrief={debrief} loadState={loadState} market={market}/>
 
         {/* PANEL · Critical Moments timeline */}
         <CriticalMomentsPanel debrief={debrief} loadState={loadState}/>
@@ -143,7 +146,7 @@ export default function DebriefPage({ params }: { params: Promise<{ id: string }
 
 // ── PANELS ───────────────────────────────────────────────────
 
-function HeadlinePanel({ profile, archetype }: { profile: BehaviorProfile; archetype: ArchetypeCard }) {
+function HeadlinePanel({ profile, archetype, market }: { profile: BehaviorProfile; archetype: ArchetypeCard; market: MarketSpec }) {
   const isUp = profile.dayPnL >= 0
   return (
     <div style={{
@@ -168,7 +171,7 @@ function HeadlinePanel({ profile, archetype }: { profile: BehaviorProfile; arche
         color: '#F0F0F0', lineHeight: 1.1, letterSpacing: '-0.02em',
         marginBottom: '8px',
       }}>
-        Closed the day {isUp ? '+' : ''}₹{Math.round(profile.dayPnL).toLocaleString('en-IN')}
+        Closed the day {signedMoney(profile.dayPnL, market)}
         <span style={{
           fontFamily: 'var(--font-jetbrains), monospace',
           fontSize: '20px', fontWeight: 700,
@@ -187,7 +190,7 @@ function HeadlinePanel({ profile, archetype }: { profile: BehaviorProfile; arche
   )
 }
 
-function StoryPanel({ debrief, loadState, profile }: { debrief: DebriefResponse | null; loadState: LoadState; profile: BehaviorProfile }) {
+function StoryPanel({ debrief, loadState, profile, market }: { debrief: DebriefResponse | null; loadState: LoadState; profile: BehaviorProfile; market: MarketSpec }) {
   return (
     <Section icon={<BookOpen size={11}/>} label="Story of Your Day" color="#D4A04D">
       {loadState === 'streaming' && <SkeletonText lines={6}/>}
@@ -198,7 +201,7 @@ function StoryPanel({ debrief, loadState, profile }: { debrief: DebriefResponse 
           lineHeight: 1.75,
           whiteSpace: 'pre-wrap',
         }}>
-          {debrief?.narrative ?? `You placed ${profile.tradeCount} trades and closed ${profile.dayPnL >= 0 ? '+' : ''}₹${Math.round(profile.dayPnL)} on the day.`}
+          {debrief?.narrative ?? `You placed ${profile.tradeCount} trades and closed ${signedMoney(profile.dayPnL, market)} on the day.`}
         </div>
       )}
     </Section>
@@ -257,7 +260,7 @@ function WinsPanel({ debrief, loadState, profile }: { debrief: DebriefResponse |
       {wins.length === 0 && loadState !== 'streaming' && (
         <div style={{ fontFamily: 'var(--font-fraunces), serif', fontStyle: 'italic', fontSize: '13px', color: '#808080' }}>
           {profile.tradeCount === 0
-            ? 'No trades to evaluate — but holding cash on a brutal day was, in a way, a win.'
+            ? 'No trades to evaluate — but sitting out a day you do not understand is a legitimate decision.'
             : 'Few clear wins this session. The session was the lesson.'}
         </div>
       )}
@@ -424,7 +427,7 @@ function MistakesPanel({ debrief, mistakes, loadState }: { debrief: DebriefRespo
 
 // ── NEW PANEL: Per-trade breakdown with counterfactuals ──
 
-function TradeBreakdownPanel({ debrief, loadState }: { debrief: DebriefResponse | null; loadState: LoadState }) {
+function TradeBreakdownPanel({ debrief, loadState, market }: { debrief: DebriefResponse | null; loadState: LoadState; market: MarketSpec }) {
   const trades = debrief?.tradeBreakdown ?? []
   if (loadState === 'streaming') {
     return (
@@ -464,7 +467,7 @@ function TradeBreakdownPanel({ debrief, loadState }: { debrief: DebriefResponse 
                   background: 'rgba(255,31,31,0.10)',
                   border: '1px solid rgba(255,31,31,0.30)',
                   borderRadius: '4px',
-                }}>Avoidable: ₹{t.estimatedAvoidableLoss.toLocaleString('en-IN')}</span>
+                }}>Avoidable: {formatMoney(t.estimatedAvoidableLoss, market)}</span>
               )}
             </div>
 

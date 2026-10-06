@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Eye, Briefcase, FileText, Newspaper, BookOpen } from 'lucide-react'
-import { useLiveSession, fmtIST } from '@/lib/contexts/live-session-context'
+import { useLiveSession } from '@/lib/contexts/live-session-context'
 import { useTracer } from '@/lib/behavior/tracer'
 
 const SECTOR_COLOR: Record<string, string> = {
@@ -91,7 +91,7 @@ export function RightRail() {
 // ─── Watch ─────────────────────────────────────────────────
 
 function WatchPanel() {
-  const { state, dispatch, ltp, prevClose, pctChange, symbols } = useLiveSession()
+  const { state, dispatch, ltp, prevClose, pctChange, symbols, market } = useLiveSession()
   return (
     <div style={{ padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
       <Header>Watchlist · {symbols.length}</Header>
@@ -128,10 +128,10 @@ function WatchPanel() {
               <span style={{ fontFamily: 'var(--font-fraunces), serif', fontWeight: 700, fontSize: '13px', color: '#E0E0E0' }}>{sym}</span>
             </div>
             <span style={{ fontFamily: 'var(--font-jetbrains), monospace', fontSize: '12px', color: '#E0E0E0', fontWeight: 600 }}>
-              ₹{price.toFixed(2)}
+              {market.currencySymbol}{price.toFixed(2)}
             </span>
             <span style={{ fontFamily: 'var(--font-jetbrains), monospace', fontSize: '9px', color: '#404040', letterSpacing: '0.06em' }}>
-              prev ₹{prevClose(sym).toFixed(2)}
+              prev {market.currencySymbol}{prevClose(sym).toFixed(2)}
             </span>
             <span style={{ fontFamily: 'var(--font-jetbrains), monospace', fontSize: '11px', color: isDown ? '#FF1F1F' : '#00C853', fontWeight: 700 }}>
               {isDown ? '▼' : '▲'}{Math.abs(pct).toFixed(2)}%
@@ -146,7 +146,7 @@ function WatchPanel() {
 // ─── Positions ─────────────────────────────────────────────
 
 function PositionsPanel() {
-  const { state, dispatch, ltp, marginUsed, positionsValue } = useLiveSession()
+  const { state, dispatch, ltp, marginUsed, positionsValue, market } = useLiveSession()
   const positions = Object.values(state.positions)
   return (
     <div style={{ padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -159,10 +159,10 @@ function PositionsPanel() {
         borderRadius: '6px',
         display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 10px',
       }}>
-        <KV label="Holdings" value={`₹${positionsValue.toFixed(0)}`}/>
-        <KV label="Margin" value={`₹${marginUsed.toFixed(0)}`}/>
-        <KV label="Cash free" value={`₹${state.cash.toFixed(0)}`}/>
-        <KV label="Realised P&L" value={`${state.realisedPnL >= 0 ? '+' : ''}₹${state.realisedPnL.toFixed(0)}`} color={state.realisedPnL >= 0 ? '#00C853' : '#FF1F1F'}/>
+        <KV label="Holdings" value={`${market.currencySymbol}${positionsValue.toFixed(0)}`}/>
+        <KV label="Margin" value={`${market.currencySymbol}${marginUsed.toFixed(0)}`}/>
+        <KV label="Cash free" value={`${market.currencySymbol}${state.cash.toFixed(0)}`}/>
+        <KV label="Realised P&L" value={`${state.realisedPnL >= 0 ? '+' : ''}${market.currencySymbol}${state.realisedPnL.toFixed(0)}`} color={state.realisedPnL >= 0 ? '#00C853' : '#FF1F1F'}/>
       </div>
 
       {positions.length === 0 && (
@@ -199,16 +199,16 @@ function PositionsPanel() {
                 fontFamily: 'var(--font-jetbrains), monospace', fontSize: '13px', fontWeight: 700,
                 color: isProfit ? '#00C853' : '#FF1F1F',
               }}>
-                {isProfit ? '+' : ''}₹{Math.abs(pnl).toFixed(0)} ({isProfit ? '+' : ''}{pnlPct.toFixed(2)}%)
+                {isProfit ? '+' : ''}{market.currencySymbol}{Math.abs(pnl).toFixed(0)} ({isProfit ? '+' : ''}{pnlPct.toFixed(2)}%)
               </span>
             </div>
             <div style={{
               display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px',
               fontFamily: 'var(--font-jetbrains), monospace', fontSize: '10px', color: '#808080',
             }}>
-              <span>Avg ₹{p.avgPrice.toFixed(2)}</span>
-              <span style={{ textAlign: 'center' }}>LTP ₹{last.toFixed(2)}</span>
-              <span style={{ textAlign: 'right' }}>{p.stopPrice ? `SL ₹${p.stopPrice.toFixed(2)}` : 'No SL'}</span>
+              <span>Avg {market.currencySymbol}{p.avgPrice.toFixed(2)}</span>
+              <span style={{ textAlign: 'center' }}>LTP {market.currencySymbol}{last.toFixed(2)}</span>
+              <span style={{ textAlign: 'right' }}>{p.stopPrice ? `SL ${market.currencySymbol}${p.stopPrice.toFixed(2)}` : 'No SL'}</span>
             </div>
             <div style={{ display: 'flex', gap: '4px' }}>
               <button
@@ -286,6 +286,7 @@ function OrdersPanel() {
 }
 
 function OrderRow({ order, onCancel }: { order: ReturnType<typeof useLiveSession>['state']['orders'][number]; onCancel?: () => void }) {
+  const { market, clock } = useLiveSession()
   const isBuy = order.side === 'BUY'
   const c = order.status === 'FILLED' ? (isBuy ? '#00C853' : '#FF1F1F')
     : order.status === 'PENDING' ? '#FF1F1F'
@@ -305,17 +306,17 @@ function OrderRow({ order, onCancel }: { order: ReturnType<typeof useLiveSession
           color: c, letterSpacing: '0.06em',
         }}>
           {order.side} {order.symbol} · {order.quantity} @ {order.type}
-          {order.price ? ` ₹${order.price}` : ''}
+          {order.price ? ` ${market.currencySymbol}${order.price}` : ''}
         </span>
         <span style={{ fontFamily: 'var(--font-jetbrains), monospace', fontSize: '9px', color: '#404040' }}>
-          {fmtIST(order.placedAtMin)}
+          {clock(order.placedAtMin)}
         </span>
       </div>
       <div style={{
         fontFamily: 'var(--font-inter), sans-serif',
         fontSize: '10px', color: '#808080',
       }}>
-        {order.status === 'FILLED' ? `Filled @ ₹${order.filledPrice?.toFixed(2)} · ${fmtIST(order.filledAtMin ?? 0)}` :
+        {order.status === 'FILLED' ? `Filled @ ${market.currencySymbol}${order.filledPrice?.toFixed(2)} · ${clock(order.filledAtMin ?? 0)}` :
          order.status === 'PENDING' ? 'Waiting…' :
          order.reason ?? order.status}
       </div>
@@ -338,7 +339,7 @@ function OrderRow({ order, onCancel }: { order: ReturnType<typeof useLiveSession
 // ─── News ──────────────────────────────────────────────────
 
 function NewsPanel() {
-  const { pendingNews, state } = useLiveSession()
+  const { pendingNews, state, clock, market } = useLiveSession()
   const { events, track } = useTracer()
   const news = pendingNews().slice().reverse()
   const signals = news.filter(n => n.classification === 'signal')
@@ -426,13 +427,14 @@ function NewsPanel() {
         letterSpacing: '0.12em', textAlign: 'center',
         marginTop: '4px',
       }}>
-        Session minute: {fmtIST(state.currentMinute)} IST
+        Session minute: {clock(state.currentMinute)} {market.tz}
       </div>
     </div>
   )
 }
 
 function NewsRow({ item, muted }: { item: ReturnType<typeof useLiveSession>['pendingNews'] extends () => infer R ? (R extends Array<infer U> ? U : never) : never; muted?: boolean }) {
+  const { clock } = useLiveSession()
   const sevColor: Record<string, string> = {
     low: '#808080', medium: '#FF1F1F', high: '#FF1F1F', critical: '#FF1F1F',
   }
@@ -457,7 +459,7 @@ function NewsRow({ item, muted }: { item: ReturnType<typeof useLiveSession>['pen
           fontFamily: 'var(--font-jetbrains), monospace', fontSize: '8px',
           color: c, letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '2px', fontWeight: 700,
         }}>
-          {fmtIST(item.fireAt)} · {item.source ?? 'wire'}
+          {clock(item.fireAt)} · {item.source ?? 'wire'}
         </div>
       </div>
     </div>
@@ -467,10 +469,9 @@ function NewsRow({ item, muted }: { item: ReturnType<typeof useLiveSession>['pen
 // ─── Coach (ORUS whispers list) ────────────────────────────
 
 function CoachPanel() {
-  const { state, whisperForMinute } = useLiveSession()
-  // Show all whispers up to current minute
-  const COV20_WHISPERS = require('@/lib/data/scenarios/cov-20/live-events').COV20_WHISPERS as Array<{ fireAt: number; text: string; severity?: string }>
-  const fired = COV20_WHISPERS.filter(w => w.fireAt <= state.currentMinute).reverse()
+  const { state, whisperForMinute, scenario, clock, market } = useLiveSession()
+  // Show all whispers up to current minute (scripted per scenario; COV-20 only so far)
+  const fired = scenario.whispers.filter(w => w.fireAt <= state.currentMinute).reverse()
   const live = whisperForMinute(state.currentMinute)
   void live
 
@@ -498,7 +499,7 @@ function CoachPanel() {
           display: 'flex', flexDirection: 'column', gap: '4px',
         }}>
           <div style={{ fontFamily: 'var(--font-jetbrains), monospace', fontSize: '9px', color: '#FF1F1F', fontWeight: 700, letterSpacing: '0.12em' }}>
-            ◆ {fmtIST(w.fireAt)} IST
+            ◆ {clock(w.fireAt)} {market.tz}
           </div>
           <div style={{ fontFamily: 'var(--font-fraunces), serif', fontStyle: 'italic', fontSize: '12px', color: '#C0C0C0', lineHeight: 1.45 }}>
             {w.text}

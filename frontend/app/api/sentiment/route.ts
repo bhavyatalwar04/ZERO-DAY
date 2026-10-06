@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
 import { generateText } from 'ai';
 import { withGroqFallback } from '@/lib/ai/groq-client';
+import { requireUser } from '@/lib/auth/require-user'
 
 export const maxDuration = 10;
 
 export async function POST(req: Request) {
+  const auth = await requireUser('v1-ai')   // P8 + 8.4: signed-in users only, within the hourly limit
+  if (auth instanceof Response) return auth
   try {
     const { headline } = await req.json();
 

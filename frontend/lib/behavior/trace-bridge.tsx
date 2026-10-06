@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from 'react'
 import { useLiveSession } from '@/lib/contexts/live-session-context'
-import { COV20_NEWS_EVENTS } from '@/lib/data/scenarios/cov-20/live-events'
 import { useTracer } from './tracer'
 
 /**
@@ -11,7 +10,7 @@ import { useTracer } from './tracer'
  * the live session.
  */
 export function TraceBridge() {
-  const { state, totalEquity } = useLiveSession()
+  const { state, totalEquity, scenario } = useLiveSession()
   const { track } = useTracer()
 
   const sessionStartedRef = useRef(false)
@@ -158,7 +157,7 @@ export function TraceBridge() {
     if (cur > lastNewsCountRef.current) {
       const newIds = state.firedNewsIds.slice(lastNewsCountRef.current)
       for (const id of newIds) {
-        const evt = COV20_NEWS_EVENTS.find(n => n.id === id)
+        const evt = scenario.dataset.news.find(n => n.id === id)
         track('news_dropped', state.currentMinute, {
           newsId: id,
           classification: evt?.classification,

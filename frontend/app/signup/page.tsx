@@ -7,7 +7,8 @@ import Link from 'next/link'
 import { useNavigation } from '@/lib/contexts/navigation-context'
 import { useUser } from '@/lib/contexts/user-context'
 import { initUser } from '@/lib/utils/localStorage'
-import { createClient, IS_SUPABASE_CONFIGURED, IS_DEMO_MODE } from '@/lib/supabase/client'
+import { createClient, IS_DEMO_MODE } from '@/lib/supabase/client'
+import { DEMO_USER, shouldUseDemoFallback } from '@/lib/auth/demo'
 
 export default function SignupPage() {
     const { navigateTo } = useNavigation()
@@ -27,11 +28,20 @@ export default function SignupPage() {
         setMounted(true)
     }, [])
 
+    // Demo mode only (NEXT_PUBLIC_DEMO_MODE=true, Supabase unreachable): one fixed demo identity.
+    const enterDemo = (to: string) => {
+        setUser(initUser({ ...DEMO_USER }))
+        navigateTo(to)
+    }
+
     const handleGoogleSignIn = async () => {
         setAuthError(null)
+        // Demo mode: skip Google OAuth and sign in the fixed demo user
+        if (IS_DEMO_MODE) return enterDemo('/onboarding')
         try {
             const supabase = createClient()
-            if (IS_DEMO_MODE) {
+            const isConfigured = process.env.NEXT_PUBLIC_SUPABASE_URL?.startsWith('https://')
+            if (!isConfigured) {
                 // Mock Google sign in for demo/stub mode
                 const newUser = initUser({
                     id: `usr_google_${Date.now()}`,
@@ -52,9 +62,11 @@ export default function SignupPage() {
             })
 
             if (error) {
+                if (shouldUseDemoFallback(error)) return enterDemo('/onboarding')
                 setAuthError(error.message)
             }
         } catch (err: any) {
+            if (shouldUseDemoFallback(err)) return enterDemo('/onboarding')
             setAuthError(err.message || 'Failed to start Google sign-in')
         }
     }
@@ -66,7 +78,7 @@ export default function SignupPage() {
 
         try {
             const supabase = createClient()
-            const isConfigured = IS_SUPABASE_CONFIGURED
+            const isConfigured = process.env.NEXT_PUBLIC_SUPABASE_URL?.startsWith('https://')
             if (!isConfigured) {
                 // Offline fallback
                 const newUser = initUser({
@@ -94,6 +106,7 @@ export default function SignupPage() {
             })
 
             if (error) {
+                if (shouldUseDemoFallback(error)) return enterDemo('/onboarding')
                 setAuthError(error.message)
                 setIsLoading(false)
                 return
@@ -110,6 +123,7 @@ export default function SignupPage() {
                 navigateTo('/onboarding')
             }
         } catch (err: any) {
+            if (shouldUseDemoFallback(err)) return enterDemo('/onboarding')
             setAuthError(err.message || 'Authentication failed')
             setIsLoading(false)
         }

@@ -31,8 +31,8 @@ export async function withGroqFallback<T>(
   while (attempts < maxAttempts) {
     try {
       const groq = getClient(GROQ_KEYS[currentKeyIndex]);
-      // We use llama-3.1-8b-instant or llama3-70b-8192 for fast reasoning
-      return await operation(groq('llama-3.1-8b-instant'));
+      // P7: was llama-3.1-8b-instant, which isn't on the project's key. Only /api/sentiment (unreachable) uses this.
+      return await operation(groq('openai/gpt-oss-20b'));
     } catch (error: any) {
       const isRateLimit = error?.statusCode === 429 || error?.message?.includes('429');
       

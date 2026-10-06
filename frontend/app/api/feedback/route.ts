@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
+import { V1_MODEL_PARAMS, REASONING_HEADROOM } from '@/lib/ai/v1-model'
+import { requireUser } from '@/lib/auth/require-user'
 
 export const maxDuration = 30;
 
 let currentKeyIndex = 0;
 
 export async function POST(req: Request) {
+  const auth = await requireUser('v1-ai')   // P8 + 8.4: signed-in users only, within the hourly limit
+  if (auth instanceof Response) return auth
   try {
     const GROQ_KEYS = [
       process.env.GROQ_API_KEY_1,
@@ -54,12 +58,12 @@ The required JSON structure:
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'llama-3.1-8b-instant',
+            ...V1_MODEL_PARAMS,   // P7: was llama-3.1-8b-instant (not on the key)
             messages: formattedMessages,
             stream: true,
             temperature: 0.2, // Lower temp for more reliable JSON
             response_format: { type: "json_object" },
-            max_tokens: 1024,
+            max_tokens: 1024 + REASONING_HEADROOM,
           }),
         });
 

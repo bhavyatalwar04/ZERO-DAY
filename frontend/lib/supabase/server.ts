@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { createStubClient } from './stub'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
@@ -9,24 +10,8 @@ const IS_CONFIGURED =
   SUPABASE_URL.includes('.supabase.co') &&
   SUPABASE_KEY.length > 30
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const stub: any = {
-  auth: {
-    getUser: async () => ({ data: { user: null }, error: null }),
-    getSession: async () => ({ data: { session: null }, error: null }),
-    signOut: async () => ({ error: null }),
-  },
-  from: () => ({
-    select: () => Promise.resolve({ data: [], error: null }),
-    insert: () => Promise.resolve({ data: null, error: null }),
-    update: () => Promise.resolve({ data: null, error: null }),
-    delete: () => Promise.resolve({ data: null, error: null }),
-    upsert: () => Promise.resolve({ data: null, error: null }),
-  }),
-}
-
 export async function createClient() {
-  if (!IS_CONFIGURED) return stub
+  if (!IS_CONFIGURED) return createStubClient()
 
   const cookieStore = await cookies()
 

@@ -36,7 +36,13 @@
 <td width="50%">
 
 ### 🎯 **Historical Scenarios**
-Relive 10 curated iconic market events, from the 2008 financial crisis to the GameStop short squeeze. Each scenario is meticulously recreated with real price data.
+Relive iconic market days without knowing the outcome. Four are playable:
+- **COV-20:** the 9 March 2020 NSE crash.
+- **TAX-19:** the corporate-tax-cut rally, 20 September 2019, NSE.
+- **ELEC-24:** the election-results shock, 4 June 2024, NSE.
+- **GME-21:** the GameStop squeeze, 27 January 2021, NYSE.
+
+The last three use **real daily prices** (open, high, low, close); the minute-by-minute path between them is reconstructed and labelled as such. COV-20's prices are a synthetic reconstruction. See `docs/DECISIONS.md` (ADR-009/011).
 
 </td>
 <td width="50%">
@@ -50,13 +56,13 @@ Experience the market as it happened. Watch candles form, news break, and prices
 <td width="50%">
 
 ### 🧠 **AI-Powered Insights**
-After each trade, receive personalized feedback on your decisions. Learn what worked, what didn't, and why.
+A three-stage agent pipeline watches your trades as you make them. **Monitor** (deterministic rules) spots a risky decision such as a panic sell, averaging down or revenge trading. **Research** (an LLM with tools, no chart images) gathers the market facts at that minute. **Coach** turns both into feedback whose numbers must come from those facts. Every decision is re-checked on the server and logged to an audit trail. See `docs/DECISIONS.md`.
 
 </td>
 <td width="50%">
 
 ### 🏆 **Competitive Leaderboards**
-Compete with traders worldwide. See how your decisions stack up against the best.
+See how your decisions stack up. The leaderboard currently lives in your browser (local only).
 
 </td>
 </tr>
@@ -226,6 +232,10 @@ ZERO-DAY/
 - [x] 📈 Performance Analytics & Telemetry Debrief
 - [x] 🎓 Trading Academy & 10+ Mini-Games
 - [x] 🤖 RL-based Content Recommender & Behavioral Tracer
+- [x] 🧩 V2: Monitor → Research → Coach agent pipeline, live in the simulator
+- [x] 🗄️ V2: Supabase session log, decision-audit trail, row-level security, Google sign-in
+- [x] 📚 V2: 3 more scenarios on real daily data · evaluation set (pipeline vs single prompt) · scoring, baselines & progression dashboard
+- [ ] 🔬 V2: the cross-session study (`docs/STUDY.md`)
 
 <br />
 

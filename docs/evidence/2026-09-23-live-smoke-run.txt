@@ -1,0 +1,36 @@
+# Live smoke run 2 — 2026-09-23 — lib/agents/research.live.test.ts
+# Raw console output (ANSI codes stripped). Throwaway tools; no look-ahead clamp yet.
+
+stdout | lib/agents/research.live.test.ts > LIVE research smoke run > llama-3.1-8b-instant: completes without throwing
+══ llama-3.1-8b-instant → error  (1587 ms, 0+0 tokens)
+  ERROR: http: Groq 404: {"error":{"message":"The model `llama-3.1-8b-instant` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+ ✓ lib/agents/research.live.test.ts > LIVE research smoke run > llama-3.1-8b-instant: completes without throwing 1590ms
+stdout | lib/agents/research.live.test.ts > LIVE research smoke run > qwen/qwen3.8-27b: completes without throwing
+══ qwen/qwen3.8-27b → ok  (2798 ms, 3998+721 tokens)
+  model: get_price_summary({"fromMinute":0,"symbol":"INDIGO","toMinute":95}), get_news({"fromMinute":0,"toMinute":95})
+  tool get_price_summary: {"symbol":"INDIGO","from":"09:15","to":"10:50","open":1182.63,"close":1148.81,"high":1188.8,"low":1134.48,"windowChangePct":-2.86,"vsPrevClosePct":-7.91}
+  tool get_news: [{"time":"09:17","headline":"Asian markets open sharply lower; Nikkei down 5.1%, Hang Seng down 4.0%","source":"Reuters · 09:17","severity":"high"},{"time":"09:
+  model: get_price_summary({"fromMinute":95,"symbol":"INDIGO","toMinute":375})
+  tool get_price_summary: {"symbol":"INDIGO","from":"10:50","to":"15:25","open":1144.75,"close":1135.16,"high":1157.72,"low":1128.54,"windowChangePct":-0.84,"vsPrevClosePct":-9.01}
+  model: submit_findings({"confidence":0.9,"evidence":[{"fact":"INDIGO from 09:15 to 10:50: open 1182.63, close 1148.81, high 1188.8, low 1134.48, window change -2.86%, vs prev close -7.91%","tool":"get_price_summary"},{"fact":"INDIGO from 10:50 to 15:25: open 1144.75, close 1135.16, high 1157.72, low 1128.54, window change -0.84%, vs prev close -9.01%","tool":"get_price_summary"},{"fact":"09:25 NSE: NIFTY opens at 10,524 — gap-down 4.2%, broadest sell-off in 11 years (critical)","tool":"get_news"},{"fact":"10:32 NSE: TRADING HALTED — NIFTY breaches 5% lower circuit · 15-minute pause begins (critical)","tool":"get_news"},{"fact":"10:38 Reuters: BRENT BREAKS BELOW $32 — Saudi-Russia OPEC+ collapse drives 31% intraday crash (critical)","tool":"get_news"}],"summary":"índigo sold at 10:50 IST during a severe market-wide crash. INDIGO had already fallen 7.91% vs previous close by 10:50 (from 1182.63 open to 1148.81). The broader market was in crisis: NIFTY gapped down 4.2% at open (broadest sell-off in 11 years), breached the 5% lower circuit at 10:32 triggering a 15-minute trading halt, and Brent crude crashed 31% below $32 on the OPEC+ collapse. After the 10:50 sale, INDIGO continued to drift lower, closing at 1135.16 (-9.01% vs prev close), with a low of 1128.54. The stock never recovered above 1157.72 in the remainder of the session."})
+  tool submit_findings: {"summary":"índigo sold at 10:50 IST during a severe market-wide crash. INDIGO had already fallen 7.91% vs previous close by 10:50 (from 1182.63 open to 1148.81
+  SUMMARY: índigo sold at 10:50 IST during a severe market-wide crash. INDIGO had already fallen 7.91% vs previous close by 10:50 (from 1182.63 open to 1148.81). The broader market was in crisis: NIFTY gapped down 4.2% at open (broadest sell-off in 11 years), breached the 5% lower circuit at 10:32 triggering a 15-minute trading halt, and Brent crude crashed 31% below $32 on the OPEC+ collapse. After the 10:50 sale, INDIGO continued to drift lower, closing at 1135.16 (-9.01% vs prev close), with a low of 1128.54. The stock never recovered above 1157.72 in the remainder of the session.
+  confidence: 0.9
+  ungrounded numbers: []
+ ✓ lib/agents/research.live.test.ts > LIVE research smoke run > qwen/qwen3.8-27b: completes without throwing 2801ms
+stdout | lib/agents/research.live.test.ts > LIVE research smoke run > openai/gpt-oss-20b: completes without throwing
+══ openai/gpt-oss-20b → ok  (5386 ms, 2098+747 tokens)
+  model: get_price_summary({"fromMinute":90,"symbol":"INDIGO","toMinute":100})
+  tool get_price_summary: {"symbol":"INDIGO","from":"10:45","to":"10:55","open":1149.47,"close":1152.21,"high":1154.34,"low":1142.2,"windowChangePct":0.24,"vsPrevClosePct":-7.64}
+  model: get_news({"fromMinute":80,"toMinute":110})
+  tool get_news: [{"time":"10:38","headline":"BRENT BREAKS BELOW $32 — Saudi-Russia OPEC+ collapse drives 31% intraday crash","source":"Reuters · 10:38","severity":"critical"},{
+  model: submit_findings({"confidence":0.9,"evidence":[{"fact":"INDIGO opened at 1149.47 and closed at 1152.21 between 10:45 and 10:55, with a 0.24% change over the window and a -7.64% change vs previous close.","tool":"get_price_summary"},{"fact":"BRENT BREAKS BELOW $32 — Saudi-Russia OPEC+ collapse drives 31% intraday crash","tool":"get_news"},{"fact":"SEBI: routine memo on enhanced disclosure for FII transactions","tool":"get_news"},{"fact":"Trading resumes — NIFTY now -6.1%, all sectoral indices in red","tool":"get_news"}],"summary":"At 10:50 IST, INDIGO was trading near 1150, having risen modestly from 1149.47 to 1152.21 in the 10:45–10:55 window, a 0.24% intraday gain but still down 7.64% from the prior close. The market was under pressure, with NIFTY down 6.1% and all sectoral indices in red. Global oil prices fell sharply, as Brent dropped below $32 amid an OPEC+ collapse, contributing to the broader sell‑off. SEBI also released a memo on enhanced disclosure for FII transactions during the session."})
+  tool submit_findings: {"summary":"At 10:50 IST, INDIGO was trading near 1150, having risen modestly from 1149.47 to 1152.21 in the 10:45–10:55 window, a 0.24% intraday gain but still
+  SUMMARY: At 10:50 IST, INDIGO was trading near 1150, having risen modestly from 1149.47 to 1152.21 in the 10:45–10:55 window, a 0.24% intraday gain but still down 7.64% from the prior close. The market was under pressure, with NIFTY down 6.1% and all sectoral indices in red. Global oil prices fell sharply, as Brent dropped below $32 amid an OPEC+ collapse, contributing to the broader sell‑off. SEBI also released a memo on enhanced disclosure for FII transactions during the session.
+  confidence: 0.9
+  ungrounded numbers: ["1150"]
+ ✓ lib/agents/research.live.test.ts > LIVE research smoke run > openai/gpt-oss-20b: completes without throwing 5392ms
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  21:47:13
+   Duration  10.58s (transform 114ms, setup 0ms, import 421ms, tests 9.79s, environment 0ms)

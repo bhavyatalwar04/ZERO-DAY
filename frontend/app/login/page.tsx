@@ -7,7 +7,9 @@ import Link from 'next/link'
 import { useNavigation } from '@/lib/contexts/navigation-context'
 import { useUser } from '@/lib/contexts/user-context'
 import { initUser } from '@/lib/utils/localStorage'
-import { createClient, IS_SUPABASE_CONFIGURED, IS_DEMO_MODE } from '@/lib/supabase/client'
+import { createClient, IS_DEMO_MODE } from '@/lib/supabase/client'
+import { DEMO_USER, shouldUseDemoFallback } from '@/lib/auth/demo'
+import { safeNext } from '@/lib/auth/redirect'
 
 export default function LoginPage() {
     const { navigateTo } = useNavigation()
@@ -25,11 +27,22 @@ export default function LoginPage() {
         setMounted(true)
     }, [])
 
+    // Demo mode only (NEXT_PUBLIC_DEMO_MODE=true, Supabase unreachable): one fixed demo identity.
+    const enterDemo = (to: string) => {
+        setUser(initUser({ ...DEMO_USER }))
+        navigateTo(to)
+    }
+    // Where to go after login: ?next= from the route guard, validated against open redirects.
+    const afterLogin = () => safeNext(new URLSearchParams(window.location.search).get('next'), '/welcome')
+
     const handleGoogleSignIn = async () => {
         setAuthError(null)
+        // Demo mode: skip Google OAuth and sign in the fixed demo user
+        if (IS_DEMO_MODE) return enterDemo(afterLogin())
         try {
             const supabase = createClient()
-            if (IS_DEMO_MODE) {
+            const isConfigured = process.env.NEXT_PUBLIC_SUPABASE_URL?.startsWith('https://')
+            if (!isConfigured) {
                 // Mock Google sign in for demo/stub mode
                 const newUser = initUser({
                     id: `usr_google_${Date.now()}`,
@@ -45,14 +58,16 @@ export default function LoginPage() {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${window.location.origin}/auth/callback?next=/welcome`,
+                    redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(afterLogin())}`,
                 },
             })
 
             if (error) {
+                if (shouldUseDemoFallback(error)) return enterDemo('/welcome')
                 setAuthError(error.message)
             }
         } catch (err: any) {
+            if (shouldUseDemoFallback(err)) return enterDemo('/welcome')
             setAuthError(err.message || 'Failed to start Google sign-in')
         }
     }
@@ -64,7 +79,7 @@ export default function LoginPage() {
 
         try {
             const supabase = createClient()
-            const isConfigured = IS_SUPABASE_CONFIGURED
+            const isConfigured = process.env.NEXT_PUBLIC_SUPABASE_URL?.startsWith('https://')
             if (!isConfigured) {
                 // Offline fallback - search if user details can be stubbed
                 const emailParts = formData.email.split('@')
@@ -88,6 +103,7 @@ export default function LoginPage() {
             })
 
             if (error) {
+                if (shouldUseDemoFallback(error)) return enterDemo('/welcome')
                 setAuthError(error.message)
                 setIsLoading(false)
                 return
@@ -103,9 +119,10 @@ export default function LoginPage() {
                     email: formData.email,
                 })
                 setUser(newUser)
-                navigateTo('/welcome')
+                navigateTo(afterLogin())
             }
         } catch (err: any) {
+            if (shouldUseDemoFallback(err)) return enterDemo('/welcome')
             setAuthError(err.message || 'Authentication failed')
             setIsLoading(false)
         }

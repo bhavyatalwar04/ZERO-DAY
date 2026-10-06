@@ -1,12 +1,18 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, X, Play, Check } from 'lucide-react'
 import { CausalChainBlock } from './tutorial/causal-chain'
 import { AnimatedPnLBlock } from './tutorial/animated-pnl'
 import { TrialTradeBlock } from './tutorial/trial-trade'
 import { CinematicBlock } from './tutorial/cinematic'
 import { useTracer } from '@/lib/behavior/tracer'
+import { useLiveSession } from '@/lib/contexts/live-session-context'
+import type { ScenarioInfo } from '@/lib/engine/scenarios'
+import {
+  usesHandBuiltIntro, introSlideCopy, sessionSlideCopy, clockSlideCopy, indicesSlideCopy,
+  walletSlideBody, practiceSlideBody,
+} from '@/lib/session/scenario-copy'
 
 export interface TutorialProps {
   open: boolean
@@ -270,6 +276,29 @@ const SLIDES: Slide[] = [
   },
 ]
 
+/** The oil-crash cascade and Aarav's 9 March 2020 replay only make sense on COV-20. */
+const COV20_ONLY_SLIDE_IDS = new Set([3, 9])
+
+/**
+ * The walkthrough for a scenario. SLIDES above were written for COV-20 and stay
+ * as they are there; other scenarios get their own day, money, hours and indices
+ * (lib/session/scenario-copy) and skip the COV-20-only demos.
+ */
+function slidesFor(s: ScenarioInfo): Slide[] {
+  if (usesHandBuiltIntro(s)) return SLIDES
+  const overrides: Record<number, Partial<Slide>> = {
+    1: { ...introSlideCopy(s), phaseLabel: 'Scenario · 1 of 2' },
+    2: { ...sessionSlideCopy(s), phaseLabel: 'Scenario · 2 of 2' },
+    8: { body: practiceSlideBody(s) },
+    10: clockSlideCopy(s),
+    11: indicesSlideCopy(s),
+    13: { body: walletSlideBody(s) },
+  }
+  return SLIDES
+    .filter(slide => !COV20_ONLY_SLIDE_IDS.has(slide.id))
+    .map(slide => ({ ...slide, ...overrides[slide.id] }))
+}
+
 const PHASE_COLORS: Record<Phase, string> = {
   SCENARIO: '#D4A04D',
   BASICS: '#3B82F6',
@@ -283,8 +312,11 @@ export function LiveTutorial({ open, onClose }: TutorialProps) {
   const { track } = useTracer()
   const slideEnterRef = useRef<number>(Date.now())
 
-  const slide = SLIDES[idx]
-  const isLast = idx === SLIDES.length - 1
+  const { scenario } = useLiveSession()
+  const slides = useMemo(() => slidesFor(scenario), [scenario])
+  const phases = useMemo(() => slides.map(s => s.phase), [slides])
+  const slide = slides[idx]
+  const isLast = idx === slides.length - 1
 
   useEffect(() => { if (open) { setIdx(0); track('tutorial_opened', 0) } }, [open, track])
 
@@ -369,7 +401,8 @@ export function LiveTutorial({ open, onClose }: TutorialProps) {
         slide={slide}
         bounds={useSpotlight ? bounds : null}
         idx={idx}
-        total={SLIDES.length}
+        total={slides.length}
+        phases={phases}
         phaseColor={phaseColor}
         isLast={isLast}
         onPrev={prev}
@@ -405,13 +438,14 @@ function TutBackdrop({ bounds }: { bounds: DOMRect | null }) {
 }
 
 function TutDialog({
-  slide, bounds, idx, total, phaseColor, isLast,
+  slide, bounds, idx, total, phases, phaseColor, isLast,
   onPrev, onNext, onClose, onJump,
 }: {
   slide: Slide
   bounds: DOMRect | null
   idx: number
   total: number
+  phases: Phase[]
   phaseColor: string
   isLast: boolean
   onPrev: () => void
@@ -514,6 +548,7 @@ function TutDialog({
         <NavigationFooter
           idx={idx}
           total={total}
+          phases={phases}
           phaseColor={phaseColor}
           isLast={isLast}
           hideNext={slide.custom === 'trial-trade' || slide.custom === 'cinematic'}
@@ -684,10 +719,11 @@ function QuizBlock({ quiz, phaseColor, slideId }: { quiz: Quiz; phaseColor: stri
 }
 
 function NavigationFooter({
-  idx, total, phaseColor, isLast, hideNext, onPrev, onNext, onJump,
+  idx, total, phases, phaseColor, isLast, hideNext, onPrev, onNext, onJump,
 }: {
   idx: number
   total: number
+  phases: Phase[]
   phaseColor: string
   isLast: boolean
   hideNext: boolean
@@ -720,8 +756,8 @@ function NavigationFooter({
       ><ChevronLeft size={12} /> Back</button>
 
       <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center', flex: 1 }}>
-        {SLIDES.map((s, i) => {
-          const pc = PHASE_COLORS[s.phase]
+        {phases.map((phase, i) => {
+          const pc = PHASE_COLORS[phase]
           const active = i === idx
           return (
             <button
