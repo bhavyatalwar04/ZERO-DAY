@@ -6,16 +6,19 @@ import { SCENARIOS } from '@/lib/engine/scenarios'
 import type { Action } from '@/lib/engine/live-reducer'
 import type { JournalEntry } from '@/lib/session/journal'
 import { scorecard } from '@/lib/scoring/scorecard'
-import { STUDY_MODE, studyCondition } from '@/lib/study/condition'
+import { STUDY_MODE } from '@/lib/study/condition'
+import { consentOf, effectiveCondition, isParticipant } from '@/lib/study/consent'
 
 // Marks a live session completed once its action log is fully synced (3.3, ADR-005),
 // and stores its scorecard (5.3/5.4) computed by replay of the stored log.
 // Not covered by proxy.ts (API routes answer 401 themselves).
 export async function POST(req: Request) {
   const supabase = await createClient()   // the user's own client: RLS limits reads to their sessions
+  let user: { id: string; user_metadata?: unknown } | null = null
   return handleEndSession(req, {
     async userId() {
       const { data } = await supabase.auth.getUser()
+      user = data.user
       return data.user?.id ?? null
     },
     async complete(userId, sessionId) {
@@ -33,7 +36,9 @@ export async function POST(req: Request) {
       if (error || !data?.length) return undefined
       const entries = (data as { seq: number; sim_minute: number; action: Action }[])
         .map((r): JournalEntry<Action> => ({ seq: r.seq, simMinute: r.sim_minute, action: r.action }))
-      return scorecard(entries, scenario.dataset, STUDY_MODE ? { condition: studyCondition(userId) } : {})
+      // 5.4: only consenting participants' sessions carry a study condition (lib/study/consent.ts).
+      const participant = STUDY_MODE && user?.id === userId && isParticipant(consentOf(user.user_metadata))
+      return scorecard(entries, scenario.dataset, participant ? { condition: effectiveCondition(user!) } : {})
     } catch (e) {
       console.error('[sessions/end] scorecard failed:', e instanceof Error ? e.message : e)
       return undefined

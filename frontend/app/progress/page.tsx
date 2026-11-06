@@ -5,6 +5,7 @@ import { progression, isScorecard } from '@/lib/scoring/progression'
 import type { Scorecard } from '@/lib/scoring/scorecard'
 import { PATTERN_LABELS } from '@/lib/monitor/templates'
 import { SCENARIOS } from '@/lib/engine/scenarios'
+import { StudyParticipation } from '@/components/study/consent'
 
 // 5.3 scorecard + 5.4/7.4 progression dashboard. Server-rendered from the user's own
 // sessions (RLS); every number was computed by the server by replay at session end.
@@ -38,6 +39,7 @@ export default async function ProgressPage() {
         <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '14px', color: MUTED, marginTop: '8px', maxWidth: '680px', lineHeight: 1.6 }}>
           Every number here is recomputed on the server from your session log when a session ends, so it is the same whether you look today or in a month.
         </p>
+        <StudyParticipation />
 
         {!latest ? (
           <div style={{ ...card, marginTop: '28px' }}>

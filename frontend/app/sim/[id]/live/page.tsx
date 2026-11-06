@@ -12,8 +12,9 @@ import { LiveTutorial } from '@/components/live/live-tutorial'
 import { LiveCoachPrompts } from '@/components/live/live-coach-prompts'
 import { TraceBridge } from '@/lib/behavior/trace-bridge'
 import { LiveAgents } from '@/components/live/live-agents'
+import { StudyConsentGate } from '@/components/study/consent'
 import {
-  NewsDropOverlay, CircuitBreakerOverlay, EndOfDayModal,
+  NewsDropOverlay, CircuitBreakerOverlay, EndOfDayModal, StopLossToast,
   OrderTypeCoach, SizingCoach,
 } from '@/components/live/overlays'
 
@@ -21,12 +22,15 @@ export default function LiveRoomPage({ params }: { params: Promise<{ id: string 
   const { id } = use(params)
   // M4: the route picks the scenario. Unknown ids 404 instead of silently playing COV-20.
   if (!SCENARIOS[id]) notFound()
+  // 5.4: in study mode, ask for consent before the session (and its row) exists.
   return (
-    <LiveSessionProvider scenarioId={id}>
-      <TraceBridge />
-      <LiveAgents />
-      <LiveRoomShell />
-    </LiveSessionProvider>
+    <StudyConsentGate>
+      <LiveSessionProvider scenarioId={id}>
+        <TraceBridge />
+        <LiveAgents />
+        <LiveRoomShell />
+      </LiveSessionProvider>
+    </StudyConsentGate>
   )
 }
 
@@ -114,6 +118,7 @@ function LiveRoomShell() {
 
       {/* Reactive overlays */}
       <NewsDropOverlay/>
+      <StopLossToast/>
       <CircuitBreakerOverlay/>
       <EndOfDayModal onContinue={() => router.push(`/sim/${state.scenarioId}/debrief`)}/>
       <OrderTypeCoach open={orderCoach} onClose={() => setOrderCoach(false)}/>

@@ -10,7 +10,8 @@ import { SCENARIOS } from '@/lib/engine/scenarios'
 import { PATTERN_LABELS } from '@/lib/monitor/templates'
 import type { DetectedEvent } from '@/lib/monitor/monitor'
 import { createClient } from '@/lib/supabase/client'
-import { STUDY_MODE, studyCondition } from '@/lib/study/condition'
+import { STUDY_MODE } from '@/lib/study/condition'
+import { effectiveCondition } from '@/lib/study/consent'
 
 // ============================================================================
 // The live room's agents (ADR-002/005/008): session sync + the decision coach.
@@ -41,7 +42,8 @@ export function LiveAgents() {
   useEffect(() => {
     if (!STUDY_MODE) return
     createClient().auth.getUser()
-      .then(({ data }: { data: { user: { id: string } | null } }) => { if (data.user) controlGroup.current = studyCondition(data.user.id) === 'control' })
+      // Only consenting participants are randomised; everyone else is coached (lib/study/consent.ts).
+      .then(({ data }: { data: { user: { id: string; user_metadata?: unknown } | null } }) => { if (data.user) controlGroup.current = effectiveCondition(data.user) === 'control' })
       .catch(() => {})
   }, [])
 

@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:live": "vitest run -c vitest.live.config.ts",
     "eval": "vitest run -c vitest.live.config.ts lib/eval/eval.live.test.ts",
-    "eval:research": "vitest run -c vitest.live.config.ts lib/eval/research-turns.live.test.ts"
+    "eval:research": "vitest run -c vitest.live.config.ts lib/eval/research-turns.live.test.ts",
+    "study": "vitest run -c vitest.live.config.ts lib/study/study-report.live.test.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.41",
