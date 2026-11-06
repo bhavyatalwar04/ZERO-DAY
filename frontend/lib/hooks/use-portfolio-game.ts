@@ -200,7 +200,7 @@ export function usePortfolioGame(scenario: PortfolioScenario): PortfolioGameStat
         startGameTimer()
       }
     }, 1000)
-  }, [stopGameTimer, stopRebalanceTimer]) // eslint-disable-line
+  }, [stopGameTimer, stopRebalanceTimer])
 
   const startGameTimer = useCallback(() => {
     if (gameTimerRef.current) return

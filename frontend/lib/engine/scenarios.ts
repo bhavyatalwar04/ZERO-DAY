@@ -62,7 +62,7 @@ export const SCENARIOS: Record<string, ScenarioInfo> = {
     difficulty: 3,
     objective: 'A crash with a circuit-breaker halt. Protect capital, find what holds up.',
     briefing: 'Covid-19 is spreading fast outside China; Italy is locking down its north, and oil prices collapsed over the weekend as Saudi Arabia and Russia fell out. Asian markets are sharply lower.',
-    dataNote: 'Prices are a synthetic reconstruction of the day (one shared crash curve plus noise), not recorded market data. See docs/AUDIT.md §1.',
+    dataNote: 'Prices are a synthetic reconstruction of the day (one shared crash curve plus noise), not recorded market data. The mid-morning trading halt is dramatised: NSE\'s market-wide circuit breakers trigger at 10/15/20%, and the first halt of the Covid crash came on 13 March 2020, not 9 March. See docs/AUDIT.md §1.',
     names: { INDIGO: 'InterGlobe Aviation', SUNPHARMA: 'Sun Pharma', RELIANCE: 'Reliance Industries', HDFCBANK: 'HDFC Bank', TITAN: 'Titan Company', TCS: 'Tata Consultancy Services' },
     hasPrepRoom: true,
     whispers: COV20_WHISPERS,

@@ -87,15 +87,15 @@ export function useCoachWhisper(
 
   useEffect(() => {
     if (triggers.heldFalling) fire('User held a stock that fell significantly through a negative event.')
-  }, [triggers.heldFalling]) // eslint-disable-line
+  }, [triggers.heldFalling])
 
   useEffect(() => {
     if (triggers.overConcentrated) fire('User put over 50% in a single stock after rebalancing.')
-  }, [triggers.overConcentrated]) // eslint-disable-line
+  }, [triggers.overConcentrated])
 
   useEffect(() => {
     if (triggers.missedSurge) fire(`User missed buying ${triggers.missedSurge} which surged after the event.`)
-  }, [triggers.missedSurge]) // eslint-disable-line
+  }, [triggers.missedSurge])
 
   return message
 }

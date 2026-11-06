@@ -23,7 +23,6 @@ export function LoadingProvider({ children }: { children: ReactNode }) {
         if (isLoading) {
             timer = setTimeout(() => setShowLoading(true), 300)
         } else {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             setShowLoading(false)
         }
         return () => clearTimeout(timer)

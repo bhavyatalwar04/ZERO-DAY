@@ -66,7 +66,6 @@ export function CinematicBlock({ onComplete }: Props) {
   // Fire once on mount
   useEffect(() => {
     track('cinematic_started', 0, { totalBeats: BEATS.length })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const beat = BEATS[beatIdx]

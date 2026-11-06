@@ -98,7 +98,6 @@ export function BriefingOverlay({
     if (phase !== 'post-roll') return
     const t = setTimeout(() => completeOnce(), POST_ROLL_MS)
     return () => clearTimeout(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
 
   // Skip button reveal

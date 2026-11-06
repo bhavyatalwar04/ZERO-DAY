@@ -1,6 +1,15 @@
 # 5.4 Study design: does the coach reduce behavioural mistakes?
 
-**Status:** the protocol and the tooling are ready; the study itself needs participants (your task). Written 2026-10-03.
+**Status:** the protocol, the consent flow and the analysis are ready (2026-11-04); the study itself needs participants (your task). Written 2026-10-03.
+
+## Running it, step by step
+
+1. In Vercel, set `NEXT_PUBLIC_STUDY_MODE=true` and redeploy.
+2. Send participants the link. Each signs in (Google), sees the information sheet before their first session, and answers. Only people who agree are randomised; everyone else plays with the coach on and is never counted.
+3. Ask each participant for **at least 4 sessions**, on different days if possible, rotating scenarios.
+4. Export the data with the query in **Data export** below (Supabase → SQL editor → Download CSV). Keep the CSV out of git: it holds user ids.
+5. Run `STUDY_CSV=~/Downloads/study.csv npm run study` in `frontend/`. It writes `docs/evidence/study-<date>.md`: sample sizes, medians, the Mann–Whitney test, effect sizes and a per-participant table (numbered, no ids).
+6. Turn study mode off afterwards if you want everyone coached again.
 **Thesis claim:** *users who receive in-the-moment agent feedback make fewer behavioural mistakes over repeated sessions than users who don't.*
 
 ## Why a control group is needed
@@ -41,19 +50,25 @@ Fewer mistakes in session 5 than in session 1 doesn't show the coach worked. Peo
 
 ## Data export
 
-Run with the service-role key, never in the browser. One row per completed session:
+Run in the Supabase SQL editor (it runs as the database owner, so it can read `auth.users`), never in the browser. One row per completed session of a **consenting participant**: the join drops anyone who declined or **withdrew**, including their earlier sessions.
 
 ```sql
-select user_id, id as session_id, ended_at,
-       result->>'condition'                         as condition,
-       (result->'behaviour'->>'flaggedPer10')::float as flagged_per_10,
-       (result->'behaviour'->>'disciplineScore')::int as discipline,
-       (result->'financial'->>'returnPct')::float    as return_pct,
-       (result->>'vsBuyAndHoldPts')::float           as vs_bh_pts
-from public.sessions
-where status = 'completed' and result is not null
-order by user_id, ended_at;
+select s.user_id, s.id as session_id, s.ended_at, s.scenario_id,
+       s.result->>'condition'                          as condition,
+       (s.result->'behaviour'->>'flaggedPer10')::float  as flagged_per_10,
+       (s.result->'behaviour'->>'disciplineScore')::int as discipline,
+       (s.result->'financial'->>'returnPct')::float     as return_pct,
+       (s.result->>'vsBuyAndHoldPts')::float            as vs_bh_pts
+from public.sessions s
+join auth.users u on u.id = s.user_id
+where s.status = 'completed'
+  and s.result ? 'condition'
+  and u.raw_user_meta_data->'study_consent'->>'status'  = 'given'
+  and u.raw_user_meta_data->'study_consent'->>'version' = '2026-11'
+order by s.user_id, s.ended_at;
 ```
+
+`npm run study` expects exactly these column names.
 
 ## Threats to validity (write these up)
 
@@ -66,4 +81,8 @@ order by user_id, ended_at;
 
 ## Ethics
 
-Get informed consent before collecting data (the consent screen is on the roadmap). Store no names in exports, only Supabase user ids. Let participants withdraw (delete their rows; `on delete cascade` from `auth.users` removes everything).
+- **Consent before data** (built 2026-11-04, `lib/study/consent.ts`, `components/study/consent.tsx`). In study mode the live room shows an information sheet before the first session: purpose, what participants do, the two groups, what data is used, no real money, and the right to withdraw. The answer is stored in the user's own `user_metadata.study_consent` with the sheet's version (`CONSENT_VERSION`); changing the sheet means bumping the version, and everyone is asked again.
+- **Declining costs nothing:** non-participants are always coached and their sessions carry no condition.
+- **Withdrawal:** a button on `/progress`. The export filters on current consent, so a withdrawal removes all of that person's sessions from the analysis. To delete their data entirely, delete the user in Supabase Auth (`on delete cascade` removes their rows).
+- **Anonymity:** no names or emails in exports, only Supabase user ids; the report numbers participants P1, P2, …
+- **Check your university's rules.** Some require ethics-board approval even for a low-risk pilot with classmates.

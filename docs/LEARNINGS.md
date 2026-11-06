@@ -968,3 +968,85 @@ Tests: 21 new (268 in total). The build passes, and a local production-server sm
 - The prompt now describes V2 (4 scenarios, the coach pipeline, `/progress`) and says "never invent pages".
 
 **Lesson:** a hard-coded description of the app is documentation, and it rots the same way docs do. Update it whenever a route is added.
+
+---
+
+## [2026-11-04] P2 — Engine fixes: stops that fire, news that's recorded, money that can't be spent twice
+
+**Authorship note:** the engine is Bhavya's FSM. Claude wrote these fixes at Bhavya's request ("complete the project" before the end-sem presentation). Bhavya should be able to answer the viva questions below before presenting them.
+
+**What we built:** four fixes in `lib/engine/live-reducer.ts` (ADR-013), plus 11 tests in `lib/engine/live-reducer.test.ts`. `ENGINE_VERSION` is now `v2.4`. 420 tests pass, along with `tsc` and `next build`.
+
+**Why this approach:**
+- **Stops fill at the current price, not at the stop.** On a gap down past the stop, a real SL-M order fills at the gap price. Filling at the stop would invent a better price than the market offered: the same kind of flattering number V2 removed everywhere else.
+- **Stops became a step in `TICK`, not a new action.** `SET_STOP` stays as it was, so stored journals keep the same action vocabulary. Converting stops into pending orders (option c) would have changed what old logs mean.
+- **Funds are checked twice:** at placement (reserve what's promised) *and* at fill (re-check). Either one alone has a hole. Placement-only misses an SL-M buy that fills above its budget. Fill-only lets the user stack orders they can never afford, and then rejects them minutes later, which is confusing.
+
+**How it actually works:**
+- *A reservation is a derived value, not stored state.* `reservedCash(state)` sums pending BUY orders each time it's needed. Nothing new is stored, so nothing can drift out of sync, and replay is untouched.
+- *Order of operations inside a tick:* fire news → expire or start circuits → (if LIVE) match orders → trigger stops → record equity. Stops run after matching, so a limit sell that fills this minute wins over the stop. The stop then finds no position and does nothing.
+- *Engine-generated orders keep ids deterministic.* The stop-loss sale takes the next `o${n}` id, exactly as a user order would, so replay rebuilds the same ids.
+- *Catch-up, not "fire exactly at minute m".* `fireNews` adds every headline with `fireAt ≤ now` that hasn't fired yet. That one rule covers normal ticks, `START` at minute 0, and `SKIP_HALT` jumping 15 minutes. An "== now" check would silently drop headlines inside a skipped halt.
+
+**Testing the tests:** the new tests were run against the *old* engine (`git show HEAD:…`). 10 of 11 failed, as they should. The 11th ("removing a stop stops it firing") passes either way, because it guards against a future regression. The random-session property test now also checks that its 150 play-throughs actually hit a stop-out, a reservation rejection and a fill-time rejection. Otherwise "no negative cash" could pass simply because no session ever tried to overspend.
+
+**Gotchas:**
+- **Bugs hide where readers are missing.** All four bugs were "field written, never read" (`stopPrice`) or "field read, never written" (`firedNewsIds`). The audit found them by grepping for a reader *and* a writer of every field. That's worth doing on any state object.
+- **Fixing a pure engine still changes history.** Replay is exact *for a given engine*. An old log replayed through the fixed engine can give a different result, which is why `ENGINE_VERSION` is stored on every session. Stored scorecards and audit states are safe because they were saved at the time.
+- **An engine action isn't a user decision.** Monitor judges journal entries (user actions), so a stop-out is never flagged as a panic sell. The V1 tracer, which diffs state, does see it, as `order_filled` + `sl_triggered`.
+
+**Viva check:**
+1. Why does a stop fill at the current price instead of at the stop price? What would the other choice do to the scorecard?
+2. Why reserve cash at placement *and* re-check at fill?
+3. A user sets a stop, the price gaps through it during a circuit halt, and they press "skip halt". What happens, and on which tick?
+4. Why bump `ENGINE_VERSION` if the reducer is still pure?
+
+**Open questions:**
+- Show a toast in the live room when a stop fires. Today it shows only in the Orders tab, labelled "stop-loss hit".
+- AUDIT §1.4 #7 (are COV-20's circuit levels historically accurate?) is a data question, still open.
+
+---
+
+## [2026-11-04] 5.4 — Consent, and a statistics test you can trust
+
+**Authorship note:** Claude wrote this at Bhavya's request ("finish the project"). It touches the thesis claim, so Bhavya should be able to explain every number in the study report.
+
+**What we built:**
+- **Consent:** `lib/study/consent.ts` and `components/study/consent.tsx`. An information sheet before the first session in study mode, and a participation panel with *Withdraw* on `/progress`.
+- **Analysis:** `lib/study/analysis.ts` and `npm run study`, which turn the Supabase export into a report.
+- **Smaller fixes:**
+  - a stop-loss toast in the live room;
+  - COV-20's data note now discloses that its circuit-breaker halt is dramatised;
+  - 14 lint warnings removed.
+- 437 tests pass, along with `tsc`, a clean `eslint` and `next build` (ADR-014).
+
+**Why this approach:**
+- **Only consenting users are randomised.** The first version hashed *everyone* into a group, so a stranger could lose the coach without agreeing to anything. Now declining changes nothing for the user.
+- **Consent is stored in `user_metadata`, not a new table.** No migration to apply. The user is *meant* to control this field. (Contrast AUDIT §5: user_metadata is the wrong place for scores, which the user must *not* control.)
+- **The analysis is code, written before the data.** A pre-registered plan only helps if the analysis can't drift once you've seen the numbers. With `npm run study`, the test, the direction (one-sided, "coached lower") and α are all fixed in a tested file.
+
+**How it actually works:**
+- *Mann–Whitney U.* Pool both groups' slopes and rank them. U counts the pairs (coached, control) where the coached slope is *higher*, with ties counting ½. If the coach helps, coached slopes are lower, so U is small. The p-value is the probability of a U this small when group labels don't matter.
+- *The exact distribution.* With no ties, every split of the ranks into two groups is equally likely under H0. A recurrence counts them: the largest value is either an a, which beats all n b's and adds n to U, or a b. That gives `P(m,n,u) = m/(m+n)·P(m−1,n,u−n) + n/(m+n)·P(m,n−1,u)`. Working in probabilities instead of counts never overflows.
+- *With ties,* the exact recurrence no longer applies. We use a normal approximation whose variance shrinks for ties, plus a ½ continuity correction. This is what R does.
+- *Effect sizes, because p alone misleads in a pilot.*
+  - Rank-biserial r = 2U/(n₁n₂) − 1, from −1 to 1.
+  - "P(a coached person's slope is lower)" = 1 − U/(n₁n₂). That's the version to put on a slide.
+
+**Testing the tests:**
+- The code reproduces R's own documented example: `wilcox.test(x, y, alternative = "g")` gives W = 35, p = 0.1272.
+- It matches a brute-force enumeration of every possible split on random samples.
+- `slope()` equals the dashboard's `olsSlope()` before rounding. It's deliberately unrounded, because rounding to 0.01 creates false ties.
+
+**Gotchas:**
+- `Array.prototype.sort()` with no comparator sorts *as strings*: `[-1, -2, -3].sort()` stays `[-1, -2, -3]`. One test failed on this. Always pass `(a, b) => a - b`.
+- `eslint --fix` deleted unused `eslint-disable` comments but left whitespace-only lines behind. Fixed by cleaning only the lines it changed, compared against `HEAD`.
+- **Verify historical claims before presenting them.** NSE's market-wide breakers are 10/15/20%, and the first Covid-crash halt was 13 March 2020 (Business Today, 13 March 2020). COV-20's 5% halt on 9 March is fiction. It's fine in a game, but only if you say so.
+
+**Viva check:**
+1. Why is a one-sided test justified here, and when would it be cheating?
+2. With 6 participants per group and p = 0.09, what do you claim?
+3. Why does a withdrawal remove *earlier* sessions from the analysis, and where does that happen?
+4. Why must a control-group user who never consented still get the coach?
+
+**Open questions:** whether the university requires ethics approval; a third "pause only" arm.

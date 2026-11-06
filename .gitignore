@@ -146,3 +146,11 @@ vite.config.ts.timestamp-*
 # *.avi
 # frontend/public/videos/
 # frontend/public/audio/
+
+# Stray tool output (debug/build/lint logs)
+frontend/debug_api*.txt
+frontend/build_output*.txt
+frontend/lint*.txt
+
+# 5.4 study exports contain user ids: never commit them
+*study*.csv

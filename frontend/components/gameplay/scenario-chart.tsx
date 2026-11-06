@@ -97,7 +97,7 @@ export function ScenarioChart({ data, currentCandleIndex, criticalMomentVisible 
         // Enforce thin candles — do NOT use fitContent as it auto-scales width
         chart.timeScale().applyOptions({ barSpacing: 6 })
         chart.timeScale().scrollToRealTime()
-    }, [data]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [data])
 
     function updateChartData(
         slicedData: OHLCVCandle[],
@@ -133,7 +133,7 @@ export function ScenarioChart({ data, currentCandleIndex, criticalMomentVisible 
                 chartRef.current.timeScale().scrollToRealTime()
             }
         }
-    }, [currentCandleIndex]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [currentCandleIndex])
 
     // ─── Handle library ready ────
     useEffect(() => {

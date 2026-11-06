@@ -421,3 +421,69 @@ The Coach is told to name repetition ("the third time today"). The numbers are i
 - Per-user, not global: the free tier's per-minute limit is still shared by all users (ADR-008).
 - "Tools" for the Coach became inputs, which keeps it at one call (latency, ADR-002).
 - 2.2 "Monitor tools" is likewise met by the rule context (position, portfolio, clock, scenario). Monitor is deterministic and calls nothing.
+
+---
+
+## ADR-013 — Engine semantics for stops, news and committed funds (P2)
+**Status:** accepted
+**Date:** 2026-11-04 · **Roadmap:** P2 (AUDIT §1.4 #1–4) · **Decided by:** Claude, under Bhavya's "complete the project" instruction (reviewable)
+
+**Context:** four engine bugs from the V1 audit were still live:
+1. A position's `stopPrice` was stored but never read during matching, so stops never fired.
+2. `firedNewsIds` was never written.
+3. Cash was checked only at placement, so several pending buys could together spend more than the account held.
+4. A SELL whose position was gone at fill time was still marked `FILLED`.
+
+They corrupt exactly the data V2 relies on: scoring (cash, P&L), Monitor/Coach context, and the V1 behaviour tracer (`news_dropped`, `sl_triggered`).
+
+**Options for stops:**
+- (a) Fill at the stop price. Simple, but flatters the user when the price gaps through the stop.
+- (b) Fill at the current price once price ≤ stop, like an exchange SL-M order. Gaps cost what they would cost.
+- (c) Convert `SET_STOP` into a pending SL-M order. Cleaner in theory, but it changes the action vocabulary that stored journals use.
+
+**Options for funds:**
+- (a) Reserve at placement: subtract cash/shares already promised to pending orders.
+- (b) Check only at fill time.
+- (c) Both.
+
+**Choice:** stops (b); funds (c).
+- **Stops:** checked every LIVE tick after order matching, never while paused or halted. A breached stop sells the whole long position at the current price. The sale is recorded as a `FILLED` SL-M SELL order, `reason: "Stop-loss hit (stop X)"`, so the order book, scoring and tracer see it. Pending sells of that symbol are rejected (`"Position closed by stop-loss"`).
+- **News:** `START`, `TICK` and `SKIP_HALT` append every headline with `fireAt ≤ currentMinute`, in time order. `SKIP_HALT` catches up the skipped minutes.
+- **Funds:** placement subtracts pending BUY cash (budgeted at limit, else trigger, else current price) and pending SELL shares. Fill time re-checks, because an SL-M buy can fill above its budget; an order that can't be honoured is `REJECTED` (`"… at fill"`), never `FILLED`.
+
+**Consequences:**
+- The engine stays pure, so replay stays exact. The 150-session replay test still passes, and now exercises all three paths.
+- `ENGINE_VERSION` is now `v2.4`. A `v2.3` log with a breached stop or an over-committed order would replay differently. Stored scorecards and decision states are unaffected, because they were saved when the session ran.
+- A stop-loss fill is an engine action, not a user action, so Monitor (which judges journal actions) never flags it as panic selling. A user's trade right after a stop-out *can* be flagged as revenge trading, which is the intended reading.
+- Not changed: circuit levels (`5 | 10 | 20`, AUDIT §1.4 #7, a data question), `Order.reason` doing double duty (#8), shorting and IOC (#9).
+
+---
+
+## ADR-014 — Study consent in user_metadata; the analysis as code
+**Status:** accepted
+**Date:** 2026-11-04 · **Roadmap:** 5.4, P6 · **Decided by:** Claude, under Bhavya's "finish the project" instruction (reviewable)
+
+**Context:** the 5.4 protocol (STUDY.md) requires informed consent before collecting data and fixes the analysis in advance. Neither existed in code. Without consent, every signed-in user in study mode was randomised, and anyone hashed to control silently lost the coach.
+
+**Options for storing consent:**
+- (a) A new `study_consents` table. Cleanest audit trail, but another migration to apply, and the two earlier ones are still unconfirmed.
+- (b) The user's own `user_metadata.study_consent`. No migration. The user can write it, which is correct here: consent is their statement to make or withdraw.
+- (c) `localStorage`. Per-device and invisible to the server, so unusable.
+
+**Choice: (b)**, with a version string (`CONSENT_VERSION`). Bumping the version re-asks everyone.
+- **Only participants are randomised.** Non-participants are always coached, and their scorecards carry no `condition`. Declining costs nothing.
+- **The live room asks before the session exists.** The gate wraps `LiveSessionProvider`, so no `sessions` row is written until the user answers.
+- **Withdrawal is honoured at export time.** The export joins `auth.users` on *current* consent, so a withdrawal removes every session of that person, earlier ones included.
+
+**Analysis:** `lib/study/analysis.ts` implements STUDY.md exactly:
+- per participant, the OLS slope of `flaggedPer10` (unrounded, ≥ 3 judged sessions);
+- a one-sided Mann–Whitney U test on the two groups' slopes. It uses the exact distribution without ties when both groups are under 50, otherwise the normal approximation with tie and continuity corrections. This mirrors R's `wilcox.test`.
+- effect sizes: rank-biserial r and P(coached lower).
+
+`npm run study` turns the CSV export into `docs/evidence/study-<date>.md`. The report numbers participants and never shows ids.
+
+**Consequences:**
+- The study can be run end to end by flipping one env var.
+- Consent lives with the auth user. Deleting the user deletes both the consent and the data (cascade).
+- The p-value code is ours, so it is tested against R's documented example (W = 35, p = 0.1272) and against brute-force enumeration of every split.
+- Not done: a third "pause only" arm (STUDY.md § Threats); ethics-board approval, if the university requires it, is Bhavya's.

@@ -54,6 +54,8 @@ Non-transition actions: `SET_SPEED`, `SET_ACTIVE`, `PLACE_ORDER`, `CANCEL_ORDER`
 
 ### 1.4 Findings in the engine (proposals for you to fix — I have not changed anything)
 
+> **Status 2026-11-04:** #1–4 fixed (ADR-013), #5 fixed 2026-10-02 (ADR-005), #6 fixed in M4 (ADR-011). #7 verified and disclosed (the 9 March halt didn't happen: NSE's breakers are 10/15/20%, and the first Covid-crash halt was 13 March 2020; COV-20's data note now says the halt is dramatised). #8–10 open. The table below is the original audit, kept as the V1 baseline.
+
 | # | Finding | Evidence | Why it matters for V2 |
 |---|---|---|---|
 | 1 | **Stop-losses never execute.** `SET_STOP` stores `position.stopPrice`; neither `TICK` nor `matchOrders` ever reads it. The "Set SL −3%" button in `right-rail.tsx:230` does nothing to execution. | `grep stopPrice` → only UI + tracer read it | The `NO_STOP_LOSS` rule counts `sl_set`, so users get credit for protection that doesn't exist. A Coach agent would praise a stop that never fired. |

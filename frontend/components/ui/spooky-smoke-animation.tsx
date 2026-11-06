@@ -247,7 +247,6 @@ export const SmokeBackground: React.FC<SmokeBackgroundProps> = ({
       renderer.destroy()
       rendererRef.current = null
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Smooth recolor on prop change

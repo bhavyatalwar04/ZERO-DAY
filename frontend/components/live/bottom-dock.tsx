@@ -83,7 +83,6 @@ function OrderTicket({ onShowOrderCoach, onShowSizingCoach }: { onShowOrderCoach
   useEffect(() => {
     setPriceStr(last.toFixed(2))
     setTriggerStr((last * 0.97).toFixed(2))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbol, type])
 
   // Pre-fill qty when switching to SELL based on position
@@ -92,7 +91,6 @@ function OrderTicket({ onShowOrderCoach, onShowSizingCoach }: { onShowOrderCoach
       const pos = state.positions[symbol]
       if (pos && pos.qty > 0) setQtyStr(String(pos.qty))
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [side, symbol])
 
   // Numeric parsed values (NaN/0-safe)

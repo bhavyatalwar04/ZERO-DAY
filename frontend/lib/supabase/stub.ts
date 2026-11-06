@@ -29,7 +29,6 @@ function query(result: { data: unknown; error: null }) {
   return builder
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createStubClient(): any {
   return {
     auth: {

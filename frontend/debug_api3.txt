@@ -1,2 +1,0 @@
-STATUS=500
-TEXT={"error":"All Groq keys rate limited or failed."}

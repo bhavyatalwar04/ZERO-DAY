@@ -4,7 +4,7 @@
 **Audit tag** (from `docs/AUDIT.md` §8): `PARTIAL` = reusable pieces exist, `NEW` = nothing exists yet.
 Build order: M1 → M3 → M2 → M4 → M5 → M6/M7 → M8. M4 can run in parallel with M2.
 
-_Last updated: 2026-10-03 (all modules pass)_
+_Last updated: 2026-11-04 (all modules pass; P2 engine fixes done; 5.4 consent + analysis built; only running the study remains)_
 
 ---
 
@@ -50,7 +50,7 @@ _Last updated: 2026-10-03 (all modules pass)_
 - [x] 5.1 Sharpe, max drawdown, win rate, avg hold time — done 2026-10-03: `lib/scoring/metrics.ts` (session Sharpe, not annualised; FIFO hold time), hand-checked tests
 - [x] 5.2 Behavioural metrics — done 2026-10-03: events by Monitor pattern (all six, incl. averaging down), flagged per 10 orders, discipline score
 - [x] 5.3 End-of-scenario scorecard — done 2026-10-03: computed by the server by replay at session end, stored in `sessions.result`; shown on `/progress`
-- [~] 5.4 Cross-session progression `[thesis claim]` — tooling done 2026-10-03: OLS trend on `/progress`, study mode with a hashed control group (`NEXT_PUBLIC_STUDY_MODE`), protocol + analysis plan in `docs/STUDY.md`. **The study itself needs participants (Bhavya)**
+- [~] 5.4 Cross-session progression `[thesis claim]` — tooling done 2026-10-03: OLS trend on `/progress`, study mode with a hashed control group (`NEXT_PUBLIC_STUDY_MODE`), protocol + analysis plan in `docs/STUDY.md`. **2026-11-04 (Claude, at Bhavya's request; ADR-014):** consent flow (information sheet before the first session, withdrawal on `/progress`; only consenting users are randomised) and the pre-registered analysis as `npm run study` (per-participant OLS slopes → one-sided Mann–Whitney U, exact or normal, rank-biserial effect size; checked against R's documented example and brute-force enumeration). **The study itself needs participants (Bhavya)**: steps in `docs/STUDY.md` § Running it
 - [x] 5.5 Baselines — done 2026-10-03: buy-and-hold, a cut-losers rule and cash, played through the same engine; on every scorecard (vs buy-and-hold in points)
 
 ## M6 — FinVQA-Chart Alignment
@@ -80,11 +80,11 @@ _Last updated: 2026-10-03 (all modules pass)_
 The audit surfaced these. I haven't folded them into the modules; accept, merge or reject each.
 
 - P1 **Server-authoritative session state** — **ACCEPTED 2026-09-23 as (b) phased** (ADR-003): action log stored from day one; agents switch from client snapshot to server replay once P2 lands.
-- P2 **Engine fixes (your code)**: stop-loss execution, news firing, cash reservation, pure reducer, scenario parameterisation (AUDIT §1.4). Gates 2.1, 4.5, 4.6, 5.1.
+- P2 ✅ **Done 2026-11-04 (Claude, at Bhavya's request; ADR-013):** stop-losses execute (SL-M semantics), `firedNewsIds` is written (incl. catch-up after `SKIP_HALT`), pending orders reserve cash and shares, and an order that can't be honoured at fill time is `REJECTED`. Pure reducer (2026-10-02) and scenario parameterisation (M4) were already done. `ENGINE_VERSION` → `v2.4`. 11 new tests in `lib/engine/live-reducer.test.ts`; 10 fail on the old engine (the 11th guards removing a stop)
 - P3 **V1-vs-V2 ablation**: same fixed cases through single-shot and multi-agent, scored. Probably part of 2.7 / 5.5.
 - P4 **Dead-code decision**: portfolio mode, orphan routes, `ai/` prototypes (AUDIT §7). Also: `portfolio_run_<slug>` storage, and prep telemetry (`zdm_prep_telemetry_*`, written but never read).
 - P5 **Auth fixes** — **DONE as 3.4** (2026-10-02).
-- P6 **Progression study design** for 5.4: participants, sessions, measure, comparison.
+- P6 ✅ **Done** as `docs/STUDY.md` (2026-10-03) + consent and analysis (2026-11-04, ADR-014).
 - P7 ✅ **Done 2026-10-03 (Claude, at Bhavya's request):** V1 routes now use `openai/gpt-oss-20b` (debrief: `gpt-oss-120b`) via `lib/ai/v1-model.ts`, with `reasoning_effort: low`, hidden reasoning and +256 token headroom. Probed live: without these settings gpt-oss returns an empty reply on small budgets. Was: 6 routes on `llama-3.1-8b-instant` and debrief on `llama-3.3-70b-versatile`, neither on the key
-- P9 **V1 prep-room indicators fabricate values (your UI):** `components/prep/tabs/tab-technicals.tsx` returns RSI = 50 when data is short, and `computeADX` returns `20 + Math.random() * 10` as a fallback, so a user can see a random ADX. Also its RSI uses simple averages, not Wilder's smoothing. `lib/indicators/` has tested replacements. **Scheduled into M4 (2026-10-03):** the prep-room candles are synthetic too (30 generated days, so MA50 can't even be computed); the tab moves to `lib/indicators/` when M4 brings real daily bars
+- P9 ✅ **Done 2026-10-03** (see 6.3). Was: **V1 prep-room indicators fabricate values (your UI):** `components/prep/tabs/tab-technicals.tsx` returns RSI = 50 when data is short, and `computeADX` returns `20 + Math.random() * 10` as a fallback, so a user can see a random ADX. Also its RSI uses simple averages, not Wilder's smoothing. `lib/indicators/` has tested replacements. **Scheduled into M4 (2026-10-03):** the prep-room candles are synthetic too (30 generated days, so MA50 can't even be computed); the tab moves to `lib/indicators/` when M4 brings real daily bars
 - P8 ✅ **Done 2026-10-03 (Claude, at Bhavya's request):** all 7 V1 routes call `requireUser()` (`lib/auth/require-user.ts`) and return 401 to anonymous callers. The help-chat widget now says "Sign in to chat with ORUS" instead of an HTTP error. Consequence: signed-out visitors on the splash page can't use help chat

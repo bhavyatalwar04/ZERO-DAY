@@ -1,2 +1,0 @@
-STATUS=500
-TEXT={"error":"All Groq keys failed.","details":"Groq API Error: 400 Bad Request"}

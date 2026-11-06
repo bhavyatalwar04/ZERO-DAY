@@ -1,9 +1,9 @@
 # Zero Day V2: Progress Report, Side by Side
 
 **What this is:** one row per task in the V2 proposal. Each row compares the proposal's promise, what V1 had, what V2 has now, and the evidence for it.
-**Updated whenever a task moves.** Detail: `ROADMAP.md` (status), `DECISIONS.md` (ADR-001…012), `LEARNINGS.md` (how each part works), `AUDIT.md` (the V1 baseline), `ARCHITECTURE.md` (thesis text), `STUDY.md` (5.4 protocol).
+**Updated whenever a task moves.** Detail: `ROADMAP.md` (status), `DECISIONS.md` (ADR-001…014), `LEARNINGS.md` (how each part works), `AUDIT.md` (the V1 baseline), `ARCHITECTURE.md` (thesis text), `STUDY.md` (5.4 protocol).
 
-_Last updated: 2026-10-03: 46 of 47 tasks done; 5.4 needs study participants._
+_Last updated: 2026-11-04: 46 of 47 tasks done; 5.4 is fully tooled (consent, analysis) and needs only participants. P2 engine fixes done (ADR-013)._
 
 **Status key:**
 - ✅ done
@@ -25,7 +25,8 @@ _Last updated: 2026-10-03: 46 of 47 tasks done; 5.4 needs study participants._
 | Auth / abuse | Bypassable; open AI routes | Route guard, Google OAuth, per-user quotas in the database |
 | Scenarios | 1 (COV-20, synthetic prices) | 4 playable: COV-20 + 3 on **real daily data** (NSE ×2, NYSE ×1) |
 | Scoring | Debrief narrative only | Sharpe, drawdown, win rate, hold time, behaviour, baselines, progression, study mode |
-| Tests | 0 | 390 deterministic tests in CI + live-model eval |
+| Tests | 0 | 437 deterministic tests in CI + live-model eval |
+| Engine correctness | Stops never fired; cash could go negative; news never recorded (AUDIT §1.4) | Fixed (ADR-013); property test over 150 random sessions: final cash ≥ 0, no sell fills without shares |
 
 ## M1: Agent runtime and orchestration (7/7 ✅)
 
@@ -81,7 +82,7 @@ _Last updated: 2026-10-03: 46 of 47 tasks done; 5.4 needs study participants._
 | 5.1 | Sharpe, drawdown, win rate, hold | None | ✅ | `metrics.ts` (hand-checked tests) |
 | 5.2 | Behavioural metrics | Partial counts | ✅ All 6 patterns, per-10 rate, discipline | `scorecard.ts` |
 | 5.3 | Scorecard | Narrative | ✅ Server-computed at session end | `sessions.result`; `/progress` |
-| 5.4 | Progression (**thesis claim**) | None | 🟡 Tooling + control group + protocol; **study not run** | `STUDY.md` |
+| 5.4 | Progression (**thesis claim**) | None | 🟡 Control group, consent flow, pre-registered analysis (`npm run study`); **study not run** | `STUDY.md`, ADR-014 |
 | 5.5 | Baselines | None | ✅ Buy-and-hold, rule, cash through the same engine | Scorecard |
 
 ## M6: FinVQA-Chart alignment (4/4 ✅)
@@ -116,7 +117,7 @@ _Last updated: 2026-10-03: 46 of 47 tasks done; 5.4 needs study participants._
 ## What you must still do
 
 1. Apply migration `supabase/migrations/20261003090000_api_quota.sql` in Supabase.
-2. Run the 5.4 study (`docs/STUDY.md`). Consider a consent screen first.
+2. Run the 5.4 study: `docs/STUDY.md` § Running it, step by step. The consent screen and the analysis are built. Check whether your university needs ethics approval first.
 3. Fill in the [cite] marks in `ARCHITECTURE.md` from the FinVQA-Chart study.
 4. Review the code written in your areas: FSM/engine, UI, ORUS routes, rules. Every file marks its authorship.
 
