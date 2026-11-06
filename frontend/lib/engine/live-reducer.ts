@@ -6,6 +6,10 @@
 // Multi-scenario (M4, 2026-10-03, by Claude at Bhavya's request): prices, session
 // length and circuit breakers come from state.scenarioId's dataset; the trading
 // logic itself is unchanged.
+// P2 engine fixes (2026-11-04, by Claude at Bhavya's request, AUDIT §1.4 #1–4):
+// position stop-losses now execute, headlines are recorded in firedNewsIds, cash
+// and shares already committed to pending orders can't be spent twice, and an
+// order that can't be honoured at fill time is REJECTED instead of FILLED.
 
 import type { LiveSessionState, Order, Position } from '@/types/live'
 import { SCENARIOS, DEFAULT_SCENARIO } from './scenarios'
@@ -82,12 +86,83 @@ function snapshotPositions(positions: Record<string, Position>, atMinute: number
   return { totalValue, unrealised }
 }
 
+/** Price an order is budgeted at: its limit, else its trigger, else the price now. */
+function refPriceOf(o: Pick<Order, 'symbol' | 'price' | 'triggerPrice'>, minute: number, scenarioId: string): number {
+  return o.price ?? o.triggerPrice ?? getPriceAtMinute(o.symbol, minute, scenarioId)
+}
+
+/** Cash promised to pending BUY orders, so a new order can't spend it again (AUDIT §1.4 #3). */
+function reservedCash(state: LiveSessionState): number {
+  let total = 0
+  for (const o of state.orders) {
+    if (o.status === 'PENDING' && o.side === 'BUY') total += o.quantity * refPriceOf(o, state.currentMinute, state.scenarioId)
+  }
+  return total
+}
+
+/** Shares promised to pending SELL orders of one symbol. */
+function reservedQty(state: LiveSessionState, symbol: string): number {
+  let total = 0
+  for (const o of state.orders) {
+    if (o.status === 'PENDING' && o.side === 'SELL' && o.symbol === symbol) total += o.quantity
+  }
+  return total
+}
+
+/** Records every headline whose time has come (AUDIT §1.4 #2). Catches up after a skipped halt. */
+function fireNews(state: LiveSessionState): LiveSessionState {
+  const fired = new Set(state.firedNewsIds)
+  const due = scenarioOf(state.scenarioId).dataset.news
+    .filter(n => n.fireAt <= state.currentMinute && !fired.has(n.id))
+    .sort((a, b) => a.fireAt - b.fireAt)
+  return due.length ? { ...state, firedNewsIds: [...state.firedNewsIds, ...due.map(n => n.id)] } : state
+}
+
+/**
+ * Executes position stop-losses (AUDIT §1.4 #1): when the price is at or below
+ * a long position's stopPrice, the whole position is sold at the current price,
+ * like an SL-M order (a gap below the stop fills at the gap price, not the stop).
+ * The sale is recorded as a filled SL-M order so the order book, scoring and the
+ * behaviour tracer all see it. Runs only while LIVE, like order matching.
+ */
+function triggerStops(state: LiveSessionState): LiveSessionState {
+  let working = state
+  for (const sym of Object.keys(state.positions).sort()) {
+    const p = working.positions[sym]
+    if (!p || p.stopPrice == null || p.qty <= 0) continue
+    const price = getPriceAtMinute(sym, working.currentMinute, working.scenarioId)
+    if (price > p.stopPrice) continue
+    const order: Order = {
+      id: `o${working.orders.length + 1}`,
+      symbol: sym, side: 'SELL', type: 'SL-M', validity: 'DAY',
+      quantity: p.qty, triggerPrice: p.stopPrice,
+      status: 'FILLED', placedAtMin: working.currentMinute,
+      filledAtMin: working.currentMinute, filledPrice: price,
+      reason: `Stop-loss hit (stop ${p.stopPrice})`,
+    }
+    const positions = { ...working.positions }
+    delete positions[sym]
+    // Pending sells of this symbol can no longer be honoured: nothing is left to sell.
+    const orders = working.orders.map(o =>
+      o.status === 'PENDING' && o.side === 'SELL' && o.symbol === sym
+        ? { ...o, status: 'REJECTED' as const, reason: 'Position closed by stop-loss' } : o)
+    working = {
+      ...working,
+      positions,
+      orders: [...orders, order],
+      cash: working.cash + p.qty * price,
+      realisedPnL: working.realisedPnL + (price - p.avgPrice) * p.qty,
+    }
+  }
+  return working
+}
+
 // ─── Reducer ────────────────────────────────────────────────
 
 export function reducer(state: LiveSessionState, action: Action): LiveSessionState {
   switch (action.type) {
     case 'START':
-      return { ...state, status: 'LIVE', started: true }
+      return fireNews({ ...state, status: 'LIVE', started: true })
 
     case 'PAUSE':
       return state.status === 'LIVE' ? { ...state, status: 'PAUSED' } : state
@@ -111,7 +186,7 @@ export function reducer(state: LiveSessionState, action: Action): LiveSessionSta
       if (!state.currentHalt) return state
       // Jump time forward to halt end, resume LIVE
       const next = state.currentHalt.endsAtMin
-      return { ...state, currentMinute: next, currentHalt: null, status: 'LIVE' }
+      return fireNews({ ...state, currentMinute: next, currentHalt: null, status: 'LIVE' })
     }
 
     case 'TICK': {
@@ -126,7 +201,7 @@ export function reducer(state: LiveSessionState, action: Action): LiveSessionSta
         return { ...close, currentMinute: sessionEnd, status: 'CLOSED' }
       }
 
-      let working: LiveSessionState = { ...state, currentMinute: next }
+      let working: LiveSessionState = fireNews({ ...state, currentMinute: next })
 
       // Check circuit halt expiry FIRST (before testing for new circuits)
       if (working.currentHalt && next >= working.currentHalt.endsAtMin) {
@@ -146,7 +221,7 @@ export function reducer(state: LiveSessionState, action: Action): LiveSessionSta
 
       // Match pending orders only when actively LIVE (not halted)
       if (working.status === 'LIVE') {
-        working = matchOrders(working)
+        working = triggerStops(matchOrders(working))
       }
 
       // Capture equity point every minute
@@ -172,11 +247,10 @@ export function reducer(state: LiveSessionState, action: Action): LiveSessionSta
         status: 'PENDING',
         placedAtMin: state.currentMinute,
       }
-      // Validate funds for BUY
+      // Validate funds for BUY, net of cash already promised to pending buys
       if (order.side === 'BUY') {
-        const refPrice = order.price ?? getPriceAtMinute(order.symbol, state.currentMinute, state.scenarioId)
-        const cost = order.quantity * refPrice
-        if (cost > state.cash) {
+        const cost = order.quantity * refPriceOf(order, state.currentMinute, state.scenarioId)
+        if (cost > state.cash - reservedCash(state)) {
           // Reject
           return {
             ...state,
@@ -184,10 +258,10 @@ export function reducer(state: LiveSessionState, action: Action): LiveSessionSta
           }
         }
       }
-      // Validate qty for SELL
+      // Validate qty for SELL, net of shares already promised to pending sells
       if (order.side === 'SELL') {
         const pos = state.positions[order.symbol]
-        if (!pos || pos.qty < order.quantity) {
+        if (!pos || pos.qty - reservedQty(state, order.symbol) < order.quantity) {
           return {
             ...state,
             orders: [...state.orders, { ...order, status: 'REJECTED', reason: 'Position too small to sell' }],
@@ -246,8 +320,15 @@ function matchOrders(state: LiveSessionState): LiveSessionState {
     }
     if (!fill) return o
 
-    // Apply fill to portfolio
+    // Apply fill to portfolio. Re-check at fill time: a trigger order can fill above
+    // its budget, and a position can shrink after a sell was placed (AUDIT §1.4 #3–4).
     const cost = o.quantity * fillPrice
+    if (o.side === 'BUY' && cost > cash) {
+      return { ...o, status: 'REJECTED' as const, reason: 'Insufficient funds at fill' }
+    }
+    if (o.side === 'SELL' && (positions[o.symbol]?.qty ?? 0) < o.quantity) {
+      return { ...o, status: 'REJECTED' as const, reason: 'Position too small to sell at fill' }
+    }
     if (o.side === 'BUY') {
       const cur = positions[o.symbol]
       if (cur && cur.qty > 0) {

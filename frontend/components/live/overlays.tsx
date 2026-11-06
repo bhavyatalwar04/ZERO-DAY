@@ -1,11 +1,53 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, AlertTriangle, ChevronRight, Info } from 'lucide-react'
 import { useLiveSession } from '@/lib/contexts/live-session-context'
 import { useTracer } from '@/lib/behavior/tracer'
-import type { NewsEvent } from '@/types/live'
+import type { NewsEvent, Order } from '@/types/live'
+
+// ─── Stop-loss toast ───────────────────────────────────────
+// P2 (2026-11-04, Claude at Bhavya's request): the engine now executes stops
+// (ADR-013). Without a notice, a position would just vanish mid-session.
+
+export function StopLossToast() {
+  const { state, market, clock } = useLiveSession()
+  const seen = useRef<Set<string> | null>(null)
+  const [visible, setVisible] = useState<Order | null>(null)
+
+  useEffect(() => {
+    const stops = state.orders.filter(o => o.status === 'FILLED' && o.reason?.startsWith('Stop-loss hit'))
+    if (seen.current === null) { seen.current = new Set(stops.map(o => o.id)); return }   // nothing to announce on mount
+    const fresh = stops.find(o => !seen.current!.has(o.id))
+    if (!fresh) return
+    stops.forEach(o => seen.current!.add(o.id))
+    setVisible(fresh)
+    const t = setTimeout(() => setVisible(null), 6000)
+    return () => clearTimeout(t)
+  }, [state.orders])
+
+  return (
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          role="status"
+          initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 30 }}
+          style={{
+            position: 'fixed', right: '16px', bottom: '16px', zIndex: 95, maxWidth: 'min(360px, calc(100vw - 32px))',
+            background: '#0A0A0A', border: '1px solid #FF1F1F', borderLeft: '4px solid #FF1F1F', borderRadius: '8px',
+            padding: '12px 16px', boxShadow: '0 12px 30px rgba(0,0,0,0.6)', fontFamily: 'var(--font-inter), sans-serif',
+          }}
+        >
+          <div style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.18em', color: '#FF1F1F' }}>STOP-LOSS HIT · {clock(visible.filledAtMin ?? 0)}</div>
+          <div style={{ fontSize: '13px', color: '#E0E0E0', marginTop: '4px', lineHeight: 1.5 }}>
+            Sold {visible.quantity} {visible.symbol} at {market.currencySymbol}{visible.filledPrice?.toFixed(2)} (stop {market.currencySymbol}{visible.triggerPrice?.toFixed(2)}).
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
 
 // ─── News drop overlay ─────────────────────────────────────
 

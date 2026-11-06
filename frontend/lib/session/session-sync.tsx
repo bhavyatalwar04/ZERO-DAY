@@ -13,8 +13,11 @@ import { supabaseTransport } from './supabase-transport'
  * 'cov20.2' = deterministic order ids (ADR-005).
  * 'v2.3' = multi-scenario engine: prices, session length and circuits per scenario (M4, ADR-011).
  *   COV-20 replays are unchanged; the version records that new scenarios exist.
+ * 'v2.4' = P2 engine fixes (AUDIT §1.4 #1–4): stop-losses execute, headlines fill
+ *   firedNewsIds, pending orders reserve cash/shares, unfillable orders are REJECTED.
+ *   A v2.3 log with a breached stop or an over-committed order replays differently.
  */
-export const ENGINE_VERSION = 'v2.3'
+export const ENGINE_VERSION = 'v2.4'
 
 /**
  * Sends the session journal to Supabase (3.3, ADR-005). Use inside LiveSessionProvider.

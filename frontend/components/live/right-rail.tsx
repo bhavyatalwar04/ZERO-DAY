@@ -316,7 +316,7 @@ function OrderRow({ order, onCancel }: { order: ReturnType<typeof useLiveSession
         fontFamily: 'var(--font-inter), sans-serif',
         fontSize: '10px', color: '#808080',
       }}>
-        {order.status === 'FILLED' ? `Filled @ ${market.currencySymbol}${order.filledPrice?.toFixed(2)} · ${clock(order.filledAtMin ?? 0)}` :
+        {order.status === 'FILLED' ? `Filled @ ${market.currencySymbol}${order.filledPrice?.toFixed(2)} · ${clock(order.filledAtMin ?? 0)}${order.reason?.startsWith('Stop-loss hit') ? ' · stop-loss hit' : ''}` :
          order.status === 'PENDING' ? 'Waiting…' :
          order.reason ?? order.status}
       </div>
