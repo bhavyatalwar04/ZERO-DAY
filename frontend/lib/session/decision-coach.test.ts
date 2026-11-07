@@ -83,6 +83,7 @@ describe('requestFeedback', () => {
 describe('describeSource', () => {
   it('is honest about which kind of feedback the user is reading', () => {
     expect(describeSource({ kind: 'server', path: 'full' })).toMatch(/AI coach · with market research/)
+    expect(describeSource({ kind: 'server', path: 'monitor_only' })).toBe('AI coach')   // Research off (ADR-015) is the normal case: no 'unavailable'
     expect(describeSource({ kind: 'server', path: 'template' })).toMatch(/Standard feedback/)
     expect(describeSource({ kind: 'local', reason: 'not_signed_in' })).toMatch(/sign in/)
   })

@@ -41,7 +41,8 @@ export interface PipelineRequestDeps {
   loadSession(sessionId: string): Promise<{ scenarioId: string } | null>
   /** Stored actions with seq ≤ uptoSeq, in order. */
   loadActions(sessionId: string, uptoSeq: number): Promise<JournalEntry<Action>[] | { error: string }>
-  research(input: ResearchInput, ctx: Omit<ToolContext, 'signal'>): Promise<AgentRun<ResearchFindings>>
+  /** Optional: absent = Research disabled (ADR-015), Coach runs on Monitor's facts. */
+  research?(input: ResearchInput, ctx: Omit<ToolContext, 'signal'>): Promise<AgentRun<ResearchFindings>>
   coach(input: CoachRunInput): Promise<AgentRun<CoachFeedback>>
   record(input: AuditInput<ResearchFindings, CoachFeedback>): Promise<{ ok: true; id: string } | { ok: false; error: string }>
   /** The caller's past sessions (RLS-scoped), for the Coach's history (2.6). Optional: absent = no past history. */
@@ -105,7 +106,7 @@ export async function handlePipelineRequest(req: Request, deps: PipelineRequestD
   const run = await runPipeline<ResearchFindings, CoachFeedback, readonly JournalEntry<Action>[]>(claimedEvent, entries, {
     // Only events triggered by THIS action count: an older event can't be replayed for fresh feedback.
     detect: log => monitorSession(log, scenario.dataset).filter(e => e.actionSeq === actionSeq),
-    research: event => deps.research({ event, scenarioLabel: scenario.label, market: scenario.market }, ctx),
+    research: deps.research && (event => deps.research!({ event, scenarioLabel: scenario.label, market: scenario.market }, ctx)),
     coach: async ({ event, findings }) => deps.coach({
       event, findings, scenarioLabel: scenario.label, market: scenario.market,
       history: coachHistory(event.kind, actionSeq, monitorSession(entries, scenario.dataset), (await deps.pastSessions?.().catch(() => [])) ?? []),

@@ -1,7 +1,7 @@
 # Zero Day V2: Progress Report, Side by Side
 
 **What this is:** one row per task in the V2 proposal. Each row compares the proposal's promise, what V1 had, what V2 has now, and the evidence for it.
-**Updated whenever a task moves.** Detail: `ROADMAP.md` (status), `DECISIONS.md` (ADR-001…014), `LEARNINGS.md` (how each part works), `AUDIT.md` (the V1 baseline), `ARCHITECTURE.md` (thesis text), `STUDY.md` (5.4 protocol).
+**Updated whenever a task moves.** Detail: `ROADMAP.md` (status), `DECISIONS.md` (ADR-001…015), `LEARNINGS.md` (how each part works), `AUDIT.md` (the V1 baseline), `ARCHITECTURE.md` (thesis text), `STUDY.md` (5.4 protocol).
 
 _Last updated: 2026-11-04: 46 of 47 tasks done; 5.4 is fully tooled (consent, analysis) and needs only participants. P2 engine fixes done (ADR-013)._
 
@@ -25,7 +25,7 @@ _Last updated: 2026-11-04: 46 of 47 tasks done; 5.4 is fully tooled (consent, an
 | Auth / abuse | Bypassable; open AI routes | Route guard, Google OAuth, per-user quotas in the database |
 | Scenarios | 1 (COV-20, synthetic prices) | 4 playable: COV-20 + 3 on **real daily data** (NSE ×2, NYSE ×1) |
 | Scoring | Debrief narrative only | Sharpe, drawdown, win rate, hold time, behaviour, baselines, progression, study mode |
-| Tests | 0 | 437 deterministic tests in CI + live-model eval |
+| Tests | 0 | 439 deterministic tests in CI + live-model eval |
 | Engine correctness | Stops never fired; cash could go negative; news never recorded (AUDIT §1.4) | Fixed (ADR-013); property test over 150 random sessions: final cash ≥ 0, no sell fills without shares |
 
 ## M1: Agent runtime and orchestration (7/7 ✅)
@@ -46,7 +46,7 @@ _Last updated: 2026-11-04: 46 of 47 tasks done; 5.4 is fully tooled (consent, an
 |---|---|---|---|---|
 | 2.1 | Monitor | Tracer counted events afterwards | ✅ 6 rules, one event per action, same code on both sides | 28 tests, mutation-checked; production event 2026-10-02 |
 | 2.2 | Monitor tools | Client selectors | ✅ By design: a deterministic rule context | ADR-001/012 |
-| 2.3 | Research | `/api/tutor` (single prompt) | ✅ ReAct + grounding; ~75% ok on the free tier, fallback covers the rest | ADR-007/010 |
+| 2.3 | Research | `/api/tutor` (single prompt) | ✅ ReAct + grounding; ~75% ok on the free tier, fallback covers the rest. Off by default in production since 2026-11-07 to fit the free quota (`AGENT_RESEARCH=on` re-enables) | ADR-007/010/015 |
 | 2.4 | Research tools | None | ✅ 5 tools, no-lookahead property test | `tools.test.ts` |
 | 2.5 | Coach | `/api/debrief` (post-session only) | ✅ Live; rubric 98–99% | ADR-008/010 |
 | 2.6 | Coach tools | 10-rule mistake list | ✅ History + bias taxonomy, as inputs | ADR-012 |

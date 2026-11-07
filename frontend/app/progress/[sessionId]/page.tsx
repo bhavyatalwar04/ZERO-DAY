@@ -26,7 +26,7 @@ type Step = { type: 'model'; toolCalls?: { name: string; arguments: string }[]; 
 
 const PATH_TEXT: Record<string, string> = {
   full: 'AI coach with market research',
-  monitor_only: 'AI coach, research unavailable',
+  monitor_only: 'AI coach, without market research',
   template: 'Standard feedback (AI unavailable)',
   rejected: 'Claim rejected by the server re-check',
 }

@@ -28,7 +28,7 @@ THE PRODUCT (so you can answer "where is X?" questions):
 - Ledger (/ledger?case=N) — 67 cases across 6 volumes (lectures, drills, simulations, analyses)
 
 THE AI COACH (during a live session):
-- When you make a risky decision, the clock pauses and three agents review it: Monitor (rules) spots the pattern, Research checks the market data at that moment (prices, indicators, news so far — never the future), and Coach explains it in plain words.
+- When you make a risky decision, the clock pauses and Monitor (rules) spots the pattern and Coach explains it in plain words, using your trade and the market at that moment. (A Research step that looks up prices, indicators and news so far can be switched on by the operators; it is usually off.)
 - The six patterns: panic selling, revenge trading, averaging down, trading on a headline (news reflex), an oversized position, overtrading.
 - If the AI is busy or over its hourly limit, you get standard feedback instead; the panel says which.
 - Signing in is required for the coach and for this chat.

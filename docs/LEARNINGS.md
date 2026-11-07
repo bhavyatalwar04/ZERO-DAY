@@ -1050,3 +1050,36 @@ Tests: 21 new (268 in total). The build passes, and a local production-server sm
 4. Why must a control-group user who never consented still get the coach?
 
 **Open questions:** whether the university requires ethics approval; a third "pause only" arm.
+
+---
+
+## [2026-11-07] ADR-015 — Fitting the product into a free quota
+
+**Authorship note:** Bhavya set the constraint (free Supabase, free Groq, no payments). Claude wrote the change at Bhavya's request.
+
+**What we built:**
+- Research is now optional in the orchestrator (`lib/agents/pipeline.ts`) and off unless `AGENT_RESEARCH=on` (`lib/agents/config.ts`).
+- The five V1 routes on gpt-oss-20b (help chat, tutor, copilot, feedback, portfolio feedback) moved to gpt-oss-120b (`lib/ai/v1-model.ts`).
+- The coach panel says "AI coach" instead of "market research unavailable", and ORUS's product description matches.
+- 2 new tests; 439 pass.
+
+**Why this approach:**
+- **Measure where the budget goes, then cut there.** One pipeline run is ~7,166 tokens, and ~6,400 of them are Research. Against 200,000 tokens/day per model, that's ~30 researched decisions a day for *everyone*, against ~270 without Research. The eval says Research buys 1 rubric point (99% vs 98%). That trade is easy.
+- **A switch, not a deletion.** Research is thesis work (1.3, 2.3) and still worth turning on for a small closed beta. An optional dependency keeps it one env var away, and the eval still runs it.
+- **Free limits are per model, so spread the load across models.** Moving the help chat and the other V1 routes to gpt-oss-120b leaves gpt-oss-20b's entire daily budget for the Coach. That's legitimate. Opening more accounts or keys to multiply the limit is not, and it risks the account.
+
+**How it actually works:**
+- *An optional dependency.* `research?:` in `PipelineDeps`. If it's absent, the orchestrator records "research disabled" and skips straight to the Coach. The Coach then gets the whole deadline (no reserve held back), and the run ends on the existing `monitor_only` path. No new path means no database migration.
+- *Honest labels follow meaning, not mechanism.* `monitor_only` used to mean "Research failed", so the panel said "unavailable". Now it is the normal case, and "unavailable" would read as an outage. The label says what the user got ("AI coach"), and the audit page still says "without market research".
+- *Env at module load.* `RESEARCH_ENABLED` is read once, when the server module loads. On Vercel, changing the variable needs a redeploy.
+
+**Gotchas:**
+- A test can pass for the wrong reason. Passing `research: undefined` to the *old* orchestrator would also end in `monitor_only`, because calling `undefined` throws and the fallback catches it. So the test also asserts the "research disabled" note, and that the Coach got more than the research-reserve budget. Those two fail on the old code.
+- A product description inside a prompt is documentation, and it rots (see the ORUS entry, 2026-10-03). The help chat was still promising "three agents".
+
+**Viva check:**
+1. Why is `monitor_only` reused instead of adding a `coach_only` path?
+2. Why does spreading routes across models help on Groq's free tier, but adding API keys doesn't count as a fix?
+3. With Research off, what exactly does the Coach see about the market?
+
+**Open questions:** whether to re-enable Research for the closed beta only; the keep-alive ping for Supabase (on hold until Bhavya restores the project).

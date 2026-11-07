@@ -4,7 +4,7 @@
 **Audit tag** (from `docs/AUDIT.md` §8): `PARTIAL` = reusable pieces exist, `NEW` = nothing exists yet.
 Build order: M1 → M3 → M2 → M4 → M5 → M6/M7 → M8. M4 can run in parallel with M2.
 
-_Last updated: 2026-11-04 (all modules pass; P2 engine fixes done; 5.4 consent + analysis built; only running the study remains)_
+_Last updated: 2026-11-07 (free-tier mode: Research off by default, V1 routes on gpt-oss-120b, ADR-015)_
 
 ---
 

@@ -487,3 +487,32 @@ They corrupt exactly the data V2 relies on: scoring (cash, P&L), Monitor/Coach c
 - Consent lives with the auth user. Deleting the user deletes both the consent and the data (cascade).
 - The p-value code is ours, so it is tested against R's documented example (W = 35, p = 0.1272) and against brute-force enumeration of every split.
 - Not done: a third "pause only" arm (STUDY.md § Threats); ethics-board approval, if the university requires it, is Bhavya's.
+
+---
+
+## ADR-015 — Free tiers only: Research off by default, the Coach gets its own model budget
+**Status:** accepted
+**Date:** 2026-11-07 · **Roadmap:** 8.4 follow-up · **Decided by:** Bhavya (constraint: free Supabase, free Groq, no payments); implementation by Claude
+
+**Context:** Zero Day will ship as a free product on Groq's free tier. Groq's limits are per model: about 30 requests/min, 1,000/day, 8,000 tokens/min and 200,000 tokens/day ([rate limits](https://console.groq.com/docs/rate-limits); the account's Limits page is authoritative). Measured in the eval (ADR-010):
+- a full pipeline run costs ~7,166 tokens, ~6,400 of them in Research (qwen3.8-27b);
+- the Coach alone costs ~730 (gpt-oss-20b).
+
+So Research caps the whole product at about 30 researched decisions a day, while the Coach alone could serve about 270. Research added 1 rubric point (99% vs 98%). Separately, the help chat and four other V1 routes (tutor, copilot, feedback, portfolio feedback) also ran on gpt-oss-20b, so they competed with the Coach for its daily budget.
+
+**Options:**
+- (a) Keep Research on; most runs hit the limit and fall back.
+- (b) Research off by default, behind a server switch.
+- (c) Remove Research entirely. That loses the ReAct work (thesis 1.3/2.3) and the option to turn it on for the closed beta.
+- For the V1 routes: (d) leave them on 20b; (e) move them to gpt-oss-120b, which the debrief already uses with the same settings and which has its own budget; (f) more API keys or accounts to multiply the limit. (f) is rejected: it risks the account.
+
+**Choice: (b) + (e).**
+- **Research is optional.** `PipelineDeps.research` is optional. Without it, the orchestrator notes "research disabled" and runs the Coach on Monitor's facts with the whole deadline. The path is `monitor_only`, already in the database check constraint, so there is no migration.
+- **The switch:** `AGENT_RESEARCH=on` in the server environment turns Research back on (`lib/agents/config.ts`).
+- **The V1 routes move to gpt-oss-120b,** so gpt-oss-20b's whole daily quota goes to the live Coach.
+- **Labels:** the coach panel now says "AI coach" for `monitor_only` (it said "market research unavailable", which reads as a fault when Research is simply off), and the audit page says "without market research". ORUS's product map now says Research is usually off.
+
+**Consequences:**
+- About 270 AI-coached decisions a day across all users. Past that, template feedback, which met the rubric 15/15 but doesn't quote the user's numbers.
+- The eval's system A (with Research) still runs via `npm run eval`, so the thesis comparison is unaffected.
+- The V1 routes may answer a little slower on the larger model, and now share the debrief's 120b budget.

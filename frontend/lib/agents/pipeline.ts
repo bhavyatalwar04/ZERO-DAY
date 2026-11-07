@@ -14,6 +14,9 @@ import type { AgentRun, SessionSnapshot } from './types'
 //   research bad + coach ok  → 'monitor_only'  (coach saw Monitor's facts only)
 //   coach bad (either case)  → 'template'      (deterministic message from the event)
 //   event not reproduced     → 'rejected'      (no tokens spent) [decision 1]
+// Research is optional (2026-11-07, Claude at Bhavya's request): with no `research`
+// dep the run goes straight to Coach and ends 'monitor_only'. On Groq's free tier
+// Research costs ~90% of a run's tokens for +1 rubric point (ADR-015).
 // ============================================================================
 
 /** What Monitor (2.1) emits: deterministic facts about one user decision. */
@@ -42,7 +45,8 @@ export interface CoachInput<Findings> {
 export interface PipelineDeps<Findings, Feedback, MonitorInput = SessionSnapshot> {
   /** Monitor's pure rules, re-run on the server's copy of state [decision 1] */
   detect: (input: MonitorInput) => DecisionEvent[]
-  research: (event: DecisionEvent, opts: { timeoutMs: number }) => Promise<AgentRun<Findings>>
+  /** absent = Research disabled: Coach runs on Monitor's facts alone */
+  research?: (event: DecisionEvent, opts: { timeoutMs: number }) => Promise<AgentRun<Findings>>
   coach: (input: CoachInput<Findings>, opts: { timeoutMs: number }) => Promise<AgentRun<Feedback>>
   /** deterministic last resort; must not fail */
   template: (event: DecisionEvent) => Feedback
@@ -130,12 +134,17 @@ export async function runPipeline<Findings, Feedback, MonitorInput = SessionSnap
   const researchStart = elapsed()
   const researchBudget = budget.deadlineMs - budget.coachReserveMs - researchStart
   let research: AgentRun<Findings> | null = null
-  try {
-    const r = await within(researchBudget, () => deps.research(trusted, { timeoutMs: researchBudget }))
-    if (r === CUT_OFF) notes.push(`research cut off after ${researchBudget}ms`)
-    else research = r
-  } catch (err) {
-    notes.push(`research threw: ${message(err)}`)
+  const runResearch = deps.research
+  if (!runResearch) {
+    notes.push('research disabled')
+  } else {
+    try {
+      const r = await within(researchBudget, () => runResearch(trusted, { timeoutMs: researchBudget }))
+      if (r === CUT_OFF) notes.push(`research cut off after ${researchBudget}ms`)
+      else research = r
+    } catch (err) {
+      notes.push(`research threw: ${message(err)}`)
+    }
   }
   const researchMs = elapsed() - researchStart
   const findings = research?.status === 'ok' ? research.output : null

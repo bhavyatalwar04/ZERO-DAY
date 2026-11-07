@@ -56,6 +56,17 @@ describe('runPipeline: fallback ladder', () => {
     expect(run.research?.status).toBe('timeout')
   })
 
+  it('research disabled (no research dep): straight to coach, monitor_only, coach gets the whole deadline', async () => {
+    const { deps, calls } = makeDeps()
+    const run = await runPipeline(event, snapshot, { ...deps, research: undefined }, budget)
+    expect(run.path).toBe('monitor_only')
+    expect(run.research).toBeNull()
+    expect(run.notes).toContain('research disabled')
+    expect(calls.research).toHaveLength(0)
+    expect(calls.coach[0].input.findings).toBeNull()
+    expect(calls.coach[0].timeoutMs).toBeGreaterThan(budget.deadlineMs - budget.coachReserveMs)   // no reserve held back
+  })
+
   it('template: coach fails after good research', async () => {
     const { deps } = makeDeps({ coach: async () => agentRun<Feedback>('coach', 'invalid_output', null) })
     const run = await runPipeline(event, snapshot, deps, budget)

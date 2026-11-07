@@ -6,6 +6,7 @@ import { withRetry } from '@/lib/agents/retry'
 import { consumeQuota, type RpcClient } from '@/lib/db/quota'
 import { PIPELINE_BUDGET } from '@/lib/agents/budgets'
 import { runResearch } from '@/lib/agents/research/research'
+import { RESEARCH_ENABLED } from '@/lib/agents/config'
 import { runCoach } from '@/lib/agents/coach/coach'
 import { handlePipelineRequest } from '@/lib/agents/pipeline-request'
 import type { JournalEntry } from '@/lib/session/journal'
@@ -47,7 +48,8 @@ export async function POST(req: Request) {
       const { data } = await supabase.from('sessions').select('result').eq('status', 'completed').order('ended_at', { ascending: false }).limit(50)
       return (data ?? []) as { result: unknown }[]
     },
-    research: (input, ctx) => runResearch(input, { model, ctx }),
+    // Off unless AGENT_RESEARCH=on (ADR-015): keeps Groq's free daily quota for the Coach.
+    research: RESEARCH_ENABLED ? (input, ctx) => runResearch(input, { model, ctx }) : undefined,
     coach: input => runCoach(input, { model }),
     // The audit trail is server-written (ADR-003): service role, through the atomic RPC (3.6).
     record: async input => {

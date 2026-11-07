@@ -55,6 +55,15 @@ describe('POST /api/pipeline', () => {
     expect(calls.records[0]).toMatchObject({ sessionId: SID, actionSeq: event.actionSeq })
   })
 
+  it('research disabled (ADR-015): no research dep → Coach alone, path monitor_only, still audited', async () => {
+    const { deps, calls } = makeDeps({ research: undefined })
+    const res = await handlePipelineRequest(post(claim()), deps)
+    expect(res.status).toBe(200)
+    const body = await res.json() as PipelineResponse
+    expect(body).toMatchObject({ path: 'monitor_only', feedback, audited: true })
+    expect(calls).toMatchObject({ research: 0, coach: 1 })
+  })
+
   it('8.4: over the hourly limit → 429 before any agent runs; an unavailable limiter fails open', async () => {
     const limited = makeDeps({ quota: async () => 'exceeded' })
     const res = await handlePipelineRequest(post(claim()), limited.deps)

@@ -82,7 +82,7 @@ export async function requestFeedback(event: DetectedEvent, deps: FeedbackDeps):
 export function describeSource(source: FeedbackSource): string {
   if (source.kind === 'server') {
     return source.path === 'full' ? 'AI coach · with market research'
-      : source.path === 'monitor_only' ? 'AI coach · market research unavailable'
+      : source.path === 'monitor_only' ? 'AI coach'   // Research off (ADR-015) or failed: either way, Monitor's facts only
       : 'Standard feedback · AI coach unavailable'
   }
   return source.reason === 'not_signed_in' ? 'Standard feedback · sign in for the AI coach'

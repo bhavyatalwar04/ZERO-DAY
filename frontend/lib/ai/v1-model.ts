@@ -18,8 +18,13 @@ export const REASONING_HEADROOM = 256
 
 const REASONING = { reasoning_effort: 'low', include_reasoning: false } as const
 
-/** Short, fast replies (chat, tutor, copilot, feedback). */
-export const V1_MODEL_PARAMS = { model: 'openai/gpt-oss-20b', ...REASONING } as const
+/**
+ * Short, fast replies (chat, tutor, copilot, feedback). On gpt-oss-120b since 2026-11-07
+ * (ADR-015): Groq's free limits are per model, so moving these off gpt-oss-20b leaves
+ * that model's whole daily quota to the live Coach. Same settings as the debrief, which
+ * already ran on 120b.
+ */
+export const V1_MODEL_PARAMS = { model: 'openai/gpt-oss-120b', ...REASONING } as const
 
 /** The post-session debrief: long structured JSON, previously the 70B model. */
 export const V1_DEBRIEF_PARAMS = { model: 'openai/gpt-oss-120b', ...REASONING } as const
