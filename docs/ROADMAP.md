@@ -4,7 +4,7 @@
 **Audit tag** (from `docs/AUDIT.md` §8): `PARTIAL` = reusable pieces exist, `NEW` = nothing exists yet.
 Build order: M1 → M3 → M2 → M4 → M5 → M6/M7 → M8. M4 can run in parallel with M2.
 
-_Last updated: 2026-11-07 (free-tier mode: Research off by default, V1 routes on gpt-oss-120b, ADR-015)_
+_Last updated: 2026-11-09 (Supabase restored, all 3 migrations verified, keep-alive ping added; free-tier mode ADR-015)_
 
 ---
 
@@ -35,7 +35,7 @@ _Last updated: 2026-11-07 (free-tier mode: Research off by default, V1 routes on
 - [x] 3.3 Migrate off localStorage — **live session sync done 2026-10-02** (ADR-005): the reducer records a journal (`lib/session/journal.ts`); `SessionSync` sends it to `session_actions` (in-order queue, retry + resync, `lib/session/sync.ts`); `/api/sessions/end` completes the session; `replay()` rebuilds state, proven on 150 random sessions against the real engine. Engine edits (deterministic order ids, exports, journaled reducer) made by Claude at your request. 161 tests + `next build`. **Verified live 2026-10-02** on zerodaymarket.vercel.app: a Google-signed-in session synced 14 actions in order (plus an RLS probe with a throwaway user: insert/read own rows OK). Scope decided 2026-10-02: the other 5 localStorage keys stay (ADR-005 addendum); behaviour metrics for 5.x come from server replay of the journal, not `zdm-trace`. Deferred: resume-after-refresh (needs a heartbeat)
 - [x] 3.4 Supabase Auth — done 2026-10-02 (ADR-004): bypass → `NEXT_PUBLIC_DEMO_MODE` only; open redirect fixed (`safeNext`); `/dashboard` → `/ledger` (temporary); route guard in `proxy.ts` (Node runtime); missing `/auth/auth-code-error` → `/login`. 19 tests + `next build`. Verified on Vercel 2026-10-02 (401s for anonymous API calls, guard redirects `/sim/COV-20/live` to login; Google OAuth works); ORUS `/api` routes still unauthenticated (your code, P8)
 - [x] 3.5 RLS policies — done 2026-09-23: users read own rows and append only to their own active session; audit trail + session results server-only; log and audit immutable (triggers). 16 PGlite tests + 3 mutation checks
-- [x] 3.6 Agent run logging (full ReAct trace) — done 2026-09-24: `record_pipeline_run()` DB function (one transaction, server-only) + `lib/db/audit.ts` + `lib/db/admin.ts`; 8 tests incl. atomicity and permission. **New migration `20260924090000_record_pipeline_run.sql` must be applied to Supabase.** Called from the pipeline API route once it exists (2.x)
+- [x] 3.6 Agent run logging (full ReAct trace) — done 2026-09-24: `record_pipeline_run()` DB function (one transaction, server-only) + `lib/db/audit.ts` + `lib/db/admin.ts`; 8 tests incl. atomicity and permission. Migration `20260924090000_record_pipeline_run.sql` **verified applied 2026-11-09** (the function exists; anon is refused). Called from the pipeline API route once it exists (2.x)
 - [x] 3.7 OHLCV cache layer — done 2026-10-03 by design (ADR-009): real daily bars are fetched ONCE by `scripts/fetch-scenario-daily.mjs` into `lib/data/scenarios/<id>/daily.json` (with provenance), committed and built deterministically. No runtime fetching, so no cache misses and replay stays exact
 
 ## M4 — Scenario Pipeline
@@ -70,7 +70,7 @@ _Last updated: 2026-11-07 (free-tier mode: Research off by default, V1 routes on
 - [x] 8.1 Next.js 16 verification — done 2026-10-02: `next build` passes (Turbopack and webpack); `proxy.ts` confirmed (Node runtime). The random build failures were a known Turbopack bug with Google Fonts' extensionless `…&skey=…` URLs (vercel/next.js#99114); fixed by self-hosting the 11 used fonts from Fontsource packages via `next/font/local` (3 unused fonts removed). The build makes no Google requests. **Check visually** that pages look unchanged
 - [x] 8.2 Secrets handling — done: Groq + service-role keys server-only (service key rotated after a leak); no Polygon key needed (ADR-009: Yahoo data fetched offline)
 - [x] 8.3 CI: run the agent eval suite — done 2026-10-03: CI runs all deterministic tests (incl. eval cases, rubric, scoring, scenario QA) on Node 22. The live eval (`npm run eval`) stays manual by design: it costs quota and LLM output varies
-- [x] 8.4 Rate limiting / cost guardrails — done 2026-10-03 (ADR-012): `consume_quota()` per user (pipeline 40/h, ORUS 60/h), atomic, fails open; plus coalescing, server re-check before spending, `retry-after`. **Apply migration `20261003090000_api_quota.sql`**
+- [x] 8.4 Rate limiting / cost guardrails — done 2026-10-03 (ADR-012): `consume_quota()` per user (pipeline 40/h, ORUS 60/h), atomic, fails open; plus coalescing, server re-check before spending, `retry-after`. Migration `20261003090000_api_quota.sql` **verified applied 2026-11-09**
 - [x] 8.5 Vercel config for new routes — done: `maxDuration = 30`; deploy path fixed (fork → CI → Vercel)
 
 ---

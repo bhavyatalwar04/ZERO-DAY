@@ -390,7 +390,7 @@ Scope options: all 9 remaining scenarios, 3 strong ones, or COV-20 only.
 ---
 
 ## ADR-012 — Rate limiting in the database; Coach history as input
-**Status:** accepted (the migration must be applied to Supabase)
+**Status:** accepted (migration verified applied 2026-11-09)
 **Date:** 2026-10-03 · **Roadmap:** 8.4, 2.6 · **Decided by:** Claude, under Bhavya's "complete all modules" instruction (reviewable)
 
 **Context (8.4):**

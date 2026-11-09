@@ -1083,3 +1083,29 @@ Tests: 21 new (268 in total). The build passes, and a local production-server sm
 3. With Research off, what exactly does the Coach see about the market?
 
 **Open questions:** whether to re-enable Research for the closed beta only; the keep-alive ping for Supabase (on hold until Bhavya restores the project).
+
+---
+
+## [2026-11-09] Ops — A free database that falls asleep
+
+**Authorship note:** Claude diagnosed the outage and wrote the keep-alive at Bhavya's request; Bhavya restored the project.
+
+**What happened:** on 7 November, "Continue with Google" led nowhere on the live site. The cause wasn't the code. The Supabase project's address, `cguupxzifmkzfengyhbb.supabase.co`, returned NXDOMAIN ("no such domain") on public DNS, because Supabase pauses free projects after a week without activity. Bhavya restored it on 9 November.
+
+**What we built:** `.github/workflows/supabase-keepalive.yml`, a GitHub Actions job every 3 days. It makes one REST query (it reaches Postgres even though RLS refuses the anon role) and one auth request, and it fails loudly if the project is unreachable, so GitHub emails Bhavya.
+
+**How we checked, from outside, without the dashboard:**
+- **DNS:** `dig @1.1.1.1 <project>.supabase.co` answered NXDOMAIN while `supabase.co` resolved. So the project was gone from the network, not just the code broken.
+- **Is Google enabled:** `GET /auth/v1/settings` with the public anon key lists the enabled providers.
+- **Does sign-in reach Google:** `GET /auth/v1/authorize?provider=google…` should redirect to `accounts.google.com`.
+- **Are the migrations applied:** call each RPC *with its real parameters*. "Permission denied" (42501) means the function exists and RLS works. "Function not found" (PGRST202) means it's missing.
+
+**Gotchas:**
+- My first migration probe called the RPCs with no arguments and got PGRST202 ("no matches"). That looked like "not applied", but PostgREST matches functions by their *parameter names*, so a call with the wrong arguments finds nothing. Probe with the real signature before concluding anything.
+- The anon key in the workflow is fine: it is already public in the site's JavaScript, and RLS is what protects data. The service-role key must never appear there.
+- GitHub disables scheduled workflows after 60 days without repository activity, and the keep-alive's own runs don't count. A quiet repo needs a push, or a manual re-enable in the Actions tab.
+
+**Viva check:**
+1. Why is a "permission denied" answer a *success* for both the migration probe and the keep-alive?
+2. Why does the keep-alive fail on an unreachable project instead of quietly retrying?
+3. Why is it safe to commit the anon key, but never the service-role key?

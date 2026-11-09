@@ -111,12 +111,12 @@ _Last updated: 2026-11-04: 46 of 47 tasks done; 5.4 is fully tooled (consent, an
 | 8.1 | Next.js 16 | Random build failures | ✅ Fonts self-hosted; builds clean |
 | 8.2 | Secrets | Groq server-side | ✅ Server-only; service key rotated |
 | 8.3 | CI | Lint + build | ✅ + all deterministic tests (Node 22); live eval manual by design |
-| 8.4 | Rate limits | None | ✅ `consume_quota()` (migration to apply) |
+| 8.4 | Rate limits | None | ✅ `consume_quota()` (migration verified applied 2026-11-09) |
 | 8.5 | Vercel | Stale deploys | ✅ Fork → CI → Vercel |
 
 ## What you must still do
 
-1. Apply migration `supabase/migrations/20261003090000_api_quota.sql` in Supabase.
+1. ~~Apply the migrations~~ Done: all three verified applied on 2026-11-09. Supabase is on the free plan, kept awake by `.github/workflows/supabase-keepalive.yml`.
 2. Run the 5.4 study: `docs/STUDY.md` § Running it, step by step. The consent screen and the analysis are built. Check whether your university needs ethics approval first.
 3. Fill in the [cite] marks in `ARCHITECTURE.md` from the FinVQA-Chart study.
 4. Review the code written in your areas: FSM/engine, UI, ORUS routes, rules. Every file marks its authorship.

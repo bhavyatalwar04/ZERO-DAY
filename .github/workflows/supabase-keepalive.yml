@@ -1,0 +1,43 @@
+name: Supabase keep-alive
+
+# Supabase pauses free projects after 1 week without activity, which took
+# Google sign-in down in November 2026 (the project's address stopped resolving).
+# This pings the project every 3 days: one query through the REST API (it reaches
+# Postgres even though RLS answers "permission denied") and one auth request.
+# The job FAILS if the project is unreachable, so GitHub emails you when it pauses.
+#
+# The URL and anon key are public by design: they ship in the website's JavaScript.
+# Never put the service-role key here.
+# Note: GitHub disables scheduled workflows after 60 days without repository
+# activity; push something (or re-enable it in the Actions tab) if that happens.
+# ADR-015 follow-up, written by Claude at Bhavya's request (2026-11-09).
+
+on:
+  schedule:
+    - cron: '17 6 */3 * *'   # 06:17 UTC on every third day of the month (gaps of 1-4 days)
+  workflow_dispatch: {}
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SUPABASE_URL: https://cguupxzifmkzfengyhbb.supabase.co
+      SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNndXVweHppZm1remZlbmd5aGJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MzY3NTUsImV4cCI6MjA4NjAxMjc1NX0.ms_Cg9KGljUpGX2p1UKKnkso8Mw43oHL5mSJ-tcSZvo
+    steps:
+      - name: Query the database through the REST API
+        run: |
+          code=$(curl -s -o /tmp/rest.json -w '%{http_code}' --max-time 30 \
+            "$SUPABASE_URL/rest/v1/sessions?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY") || code=000
+          echo "REST answered HTTP $code: $(head -c 200 /tmp/rest.json 2>/dev/null)"
+          # 200 = rows, 401/403 = RLS refused the anon role: both mean Postgres ran the query.
+          case "$code" in 200|401|403) ;; *) echo "::error::Supabase REST unreachable (HTTP $code). The project may be paused: restore it in the dashboard."; exit 1 ;; esac
+      - name: Touch the auth service
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 \
+            "$SUPABASE_URL/auth/v1/settings" -H "apikey: $SUPABASE_ANON_KEY") || code=000
+          echo "Auth answered HTTP $code"
+          [ "$code" = 200 ] || { echo "::error::Supabase auth unreachable (HTTP $code)."; exit 1; }
